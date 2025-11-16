@@ -24,8 +24,8 @@ interface ReservationLinkResponse {
   product_id: string
   expires_at: string | null
   is_active: boolean
-  artist: Artist
-  product: Product
+  artist?: Artist | null
+  product?: Product | null
 }
 
 export default function ReservationLanding() {
@@ -93,16 +93,18 @@ export default function ReservationLanding() {
     )
   }
 
-  const { artist, product } = data
-  const saleRange =
-    product.sale_start_date || product.sale_end_date
-      ? `${formatDate(product.sale_start_date)} ~ ${formatDate(product.sale_end_date)}`
-      : '상시 판매'
+  const artist = data.artist ?? null
+  const product = data.product ?? null
+  const saleRange = product
+    ? (product.sale_start_date || product.sale_end_date
+        ? `${formatDate(product.sale_start_date)} ~ ${formatDate(product.sale_end_date)}`
+        : '상시 판매')
+    : '정보 없음'
 
   return (
     <div className="chat-container">
       <div className="chat-content">
-        <h1 className="chat-header">{artist.brand_name || artist.name}</h1>
+        <h1 className="chat-header">{artist?.brand_name || artist?.name || '작가 정보'}</h1>
 
         <div className="message-group left">
           <div className="ai-card">
@@ -112,21 +114,21 @@ export default function ReservationLanding() {
             <div className="card-content">
               <div className="info-row">
                 <span className="label">작가</span>
-                <span className="value">{artist.name}</span>
+                <span className="value">{artist?.name ?? '-'}</span>
               </div>
               <div className="info-row">
                 <span className="label">브랜드</span>
-                <span className="value">{artist.brand_name}</span>
+                <span className="value">{artist?.brand_name ?? '-'}</span>
               </div>
               <div className="info-row">
                 <span className="label">연락처 링크</span>
-                <a className="value" href={artist.contact_link} target="_blank" rel="noreferrer">
-                  {artist.contact_link}
+                <a className="value" href={artist?.contact_link ?? '#'} target="_blank" rel="noreferrer">
+                  {artist?.contact_link ?? '-'}
                 </a>
               </div>
               <div className="info-row">
                 <span className="label">상품명</span>
-                <span className="value">{product.name}</span>
+                <span className="value">{product?.name ?? '-'}</span>
               </div>
               <div className="info-row">
                 <span className="label">판매 기간</span>
