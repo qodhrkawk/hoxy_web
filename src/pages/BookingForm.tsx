@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Calendar from '../components/Calendar'
 import './BookingForm.css'
+import { networkManager } from '../utils/NetworkManager'
 
 interface BookingFormProps {
-  productOptions?: string[]
+  products?: { id: string; name: string }[]
   defaultProduct?: string
+  authorId?: string
 }
 
 interface BookingData {
@@ -19,7 +21,7 @@ interface BookingData {
   termsAgreed: boolean
 }
 
-export default function BookingForm({ productOptions, defaultProduct }: BookingFormProps) {
+export default function BookingForm({ products, defaultProduct, authorId }: BookingFormProps) {
   const navigate = useNavigate()
   const [formData, setFormData] = useState<BookingData>({
     name: '',
@@ -41,14 +43,42 @@ export default function BookingForm({ productOptions, defaultProduct }: BookingF
     formData.date2 !== null &&
     formData.privacyAgreed
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isFormValid) return
 
-    if (!isFormValid) {
-      return
+    // 매핑: 선택한 상품명 -> 상품 ID
+    const selectedProductId =
+      products?.find((p) => p.name === formData.product)?.id ?? null
+
+    // 날짜 후보 포맷(YYYY-MM-DD)
+    const toYMD = (d: Date | null) =>
+      d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : null
+    const dateCandidates = [toYMD(formData.date1), toYMD(formData.date2), toYMD(formData.date3)].filter(
+      (x): x is string => !!x
+    )
+
+    // 서버 요청 본문
+    const body = {
+      author_id: authorId ?? undefined,
+      title: formData.product ? `${formData.product} 예약` : '예약',
+      customer_name: formData.name,
+      phone_number: formData.phone,
+      date_candidates: dateCandidates,
+      product_id: selectedProductId ?? undefined,
     }
 
-    // 예약 데이터를 localStorage에 저장
+    try {
+      await networkManager.post('/v1/reservations', body)
+    } catch (err: any) {
+      // 네트워크 실패 시에도 사용자 경험 유지
+      try {
+        console.error('[BookingForm] reservation create error:', err)
+        alert('예약 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+      } catch {}
+    }
+
+    // 예약 데이터를 localStorage에 저장(기존 동작 유지)
     localStorage.setItem('bookingData', JSON.stringify(formData))
     navigate('/loading')
   }
@@ -139,7 +169,7 @@ export default function BookingForm({ productOptions, defaultProduct }: BookingF
               onChange={(e) => setFormData({ ...formData, product: e.target.value })}
               required
             >
-              {(!productOptions || productOptions.length === 0) && (
+              {(!products || products.length === 0) && (
                 <>
                   <option value="">스냅 상품을 선택해 주세요</option>
                   {['상품 1', '상품 2', '상품 3'].map((p) => (
@@ -149,9 +179,9 @@ export default function BookingForm({ productOptions, defaultProduct }: BookingF
                   ))}
                 </>
               )}
-              {productOptions && productOptions.length > 0 && productOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+              {products && products.length > 0 && products.map((p) => (
+                <option key={p.id} value={p.name}>
+                  {p.name}
                 </option>
               ))}
             </select>

@@ -30,7 +30,8 @@ interface ReservationLinkResponse {
 
 export default function ReservationLanding() {
   const { token } = useParams<{ token: string }>()
-  const [productOptions, setProductOptions] = useState<string[] | null>(null)
+  const [products, setProducts] = useState<{ id: string; name: string }[] | null>(null)
+  const [authorId, setAuthorId] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -49,15 +50,15 @@ export default function ReservationLanding() {
         // 링크 응답 내 products 배열에서 상품명 추출(표시 순서 정렬)
         const names =
           Array.isArray(res.products)
-            ? [...res.products]
-                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-                .map((p) => p.name)
-                .filter((n) => !!n)
+            ? [...res.products].sort(
+                (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+              )
             : []
         if (mounted) {
-          setProductOptions(names)
+          setProducts(names.map((p) => ({ id: p.id, name: p.name })))
+          setAuthorId(res.artist?.id ?? null)
           try {
-            console.log('[ReservationLanding] product options:', names)
+            console.log('[ReservationLanding] product options:', names.map((p) => p.name))
           } catch {}
         }
       } catch (e: any) {
@@ -75,11 +76,17 @@ export default function ReservationLanding() {
   // 로딩/오류 여부와 관계없이 폼만 렌더링(레이아웃 불변)
 
   const defaultProduct = useMemo(() => {
-    if (productOptions && productOptions.length > 0) return productOptions[0]
+    if (products && products.length > 0) return products[0].name
     return ''
-  }, [productOptions])
+  }, [products])
 
   // 폼만 단독 표시: API에서 받은 상품명 1개를 옵션으로 주입하고 기본 선택 설정
-  return <BookingForm productOptions={productOptions ?? undefined} defaultProduct={defaultProduct} />
+  return (
+    <BookingForm
+      products={products ?? undefined}
+      authorId={authorId ?? undefined}
+      defaultProduct={defaultProduct}
+    />
+  )
 }
 
