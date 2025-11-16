@@ -5,6 +5,7 @@ import './BookingForm.css'
 
 interface BookingFormProps {
   productOptions?: string[]
+  defaultProduct?: string
 }
 
 interface BookingData {
@@ -18,12 +19,12 @@ interface BookingData {
   termsAgreed: boolean
 }
 
-export default function BookingForm({ productOptions }: BookingFormProps) {
+export default function BookingForm({ productOptions, defaultProduct }: BookingFormProps) {
   const navigate = useNavigate()
   const [formData, setFormData] = useState<BookingData>({
     name: '',
     phone: '',
-    product: '',
+    product: defaultProduct ?? '',
     date1: null,
     date2: null,
     date3: null,
@@ -138,11 +139,17 @@ export default function BookingForm({ productOptions }: BookingFormProps) {
               onChange={(e) => setFormData({ ...formData, product: e.target.value })}
               required
             >
-              <option value="">스냅 상품을 선택해 주세요</option>
-              {(productOptions && productOptions.length > 0
-                ? productOptions
-                : ['상품 1', '상품 2', '상품 3']
-              ).map((p) => (
+              {(!productOptions || productOptions.length === 0) && (
+                <>
+                  <option value="">스냅 상품을 선택해 주세요</option>
+                  {['상품 1', '상품 2', '상품 3'].map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </>
+              )}
+              {productOptions && productOptions.length > 0 && productOptions.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>

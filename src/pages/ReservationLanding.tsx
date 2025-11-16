@@ -58,21 +58,10 @@ export default function ReservationLanding() {
     }
   }, [token])
 
-  const formatDate = (iso?: string | null) => {
-    if (!iso) return '상시'
-    const d = new Date(iso)
-    const days = ['일', '월', '화', '수', '목', '금', '토']
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}(${days[d.getDay()]})`
-  }
+  // (예약 화면에서 현재는 사용하지 않음) 날짜 포맷터가 필요해지면 복원
 
   if (loading) {
-    return (
-      <div className="chat-container">
-        <div className="chat-content">
-          <div className="date-separator">예약 정보를 불러오는 중...</div>
-        </div>
-      </div>
-    )
+    return <div className="date-separator" style={{ padding: 24, textAlign: 'center' }}>예약 정보를 불러오는 중...</div>
   }
 
   if (error || !data) {
@@ -94,35 +83,9 @@ export default function ReservationLanding() {
     )
   }
 
-  const artist = data.artist ?? null
   const product = data.product ?? null
-  const saleRange = product
-    ? (product.sale_start_date || product.sale_end_date
-        ? `${formatDate(product.sale_start_date)} ~ ${formatDate(product.sale_end_date)}`
-        : '상시 판매')
-    : '정보 없음'
 
-  return (
-    <div className="booking-container">
-      <div className="booking-form">
-        <img src="/images/LOGO.png" alt="HOXY" className="logo" />
-        <h2>
-          {artist?.brand_name || artist?.name || '예약'}의 상품으로
-          <br />
-          예약 정보를 입력해 주세요
-        </h2>
-        <p className="subtitle">
-          판매 기간: {saleRange}
-          {artist?.contact_link ? (
-            <>
-              <br />
-              연락처 링크: <a href={artist.contact_link} target="_blank" rel="noreferrer">{artist.contact_link}</a>
-            </>
-          ) : null}
-        </p>
-        <BookingForm productOptions={product?.name ? [product.name] : undefined} />
-      </div>
-    </div>
-  )
+  // 폼만 단독 표시: API에서 받은 상품명 1개를 옵션으로 주입하고 기본 선택 설정
+  return <BookingForm productOptions={product?.name ? [product.name] : undefined} defaultProduct={product?.name ?? ''} />
 }
 
