@@ -99,20 +99,16 @@ export default function ReservationLanding() {
     return <div className="date-separator" style={{ padding: 24, textAlign: 'center' }}>예약 정보를 불러오는 중...</div>
   }
 
+  // 오류가 있어도 폼은 계속 노출(경고 배너만 표시)
   if (error || !data) {
+    console.error('[ReservationLanding] 링크 조회 오류:', error)
     return (
-      <div className="chat-container">
-        <div className="chat-content">
-          <div className="message-group left">
-            <div className="ai-card">
-              <h3 className="card-title">
-                <span className="icon">⚠️</span> 링크 오류
-              </h3>
-              <div className="card-content">
-                <p>{error || '예약 정보를 불러오지 못했습니다.'}</p>
-              </div>
-            </div>
+      <div className="booking-container">
+        <div className="booking-form">
+          <div className="date-separator" style={{ marginBottom: 16 }}>
+            <span role="img" aria-label="warning">⚠️</span> {error || '예약 정보를 불러오지 못했습니다.'}
           </div>
+          <BookingForm />
         </div>
       </div>
     )
