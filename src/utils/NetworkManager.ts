@@ -29,7 +29,7 @@ export class ServerError extends Error {
   }
 }
 
-function buildQuery(params?: RequestOptions['params']: string) {
+function buildQuery(params?: RequestOptions['params']): string {
   if (!params) return '';
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
