@@ -41,6 +41,10 @@ export default function ReservationLanding() {
         }
         const res = await networkManager.get<ReservationLinkResponse>(`/v1/reservations/links/${token}`)
         if (!mounted) return
+        // 서버 응답 로깅
+        try {
+          console.log('[ReservationLanding] link response:', res)
+        } catch {}
 
         // 링크 응답 내 products 배열에서 상품명 추출(표시 순서 정렬)
         const names =
@@ -52,9 +56,15 @@ export default function ReservationLanding() {
             : []
         if (mounted) {
           setProductOptions(names)
+          try {
+            console.log('[ReservationLanding] product options:', names)
+          } catch {}
         }
       } catch (e: any) {
         // 실패 시 폼은 기본 상태로 노출
+        try {
+          console.error('[ReservationLanding] link fetch error:', e)
+        } catch {}
       }
     })()
     return () => {
