@@ -4,29 +4,28 @@ import { networkManager } from '../utils/NetworkManager'
 import './BookingDetail.css'
 import BookingForm from './BookingForm'
 
-interface Artist {
+interface ReservationArtist {
   id: string
   name: string
+  email?: string
   brand_name: string
   contact_link: string
 }
 
-interface Product {
+interface ReservationProduct {
   id: string
   name: string
   sale_start_date: string
   sale_end_date: string | null
+  display_order?: number
+  created_at?: string
+  updated_at?: string
 }
 
 interface ReservationLinkResponse {
-  id: string
-  artist_id: string
-  token: string
-  product_id: string
-  expires_at: string | null
-  is_active: boolean
-  artist?: Artist | null
-  product?: Product | null
+  artist: ReservationArtist
+  products: ReservationProduct[]
+  unavailable_dates: string[]
 }
 
 export default function ReservationLanding() {
@@ -49,38 +48,16 @@ export default function ReservationLanding() {
         setData(res)
         setError(null)
 
-        // 아티스트 상품 목록을 추가로 시도해서 불러옴(성공한 첫 엔드포인트 사용)
-        try {
-          const artistId = res.artist_id
-          const candidates = [
-            `/v1/artists/${artistId}/products`,
-            `/v1/products?artist_id=${artistId}`,
-            `/products?artist_id=${artistId}`,
-          ]
-          let names: string[] | null = null
-          for (const ep of candidates) {
-            try {
-              const list: any = await networkManager.get<any>(ep)
-              if (Array.isArray(list)) {
-                const n = list
-                  .map((it) => (it && typeof it.name === 'string' ? it.name : null))
-                  .filter((x: string | null) => !!x) as string[]
-                if (n.length > 0) {
-                  names = Array.from(new Set(n))
-                  break
-                }
-              }
-            } catch {
-              // 다음 후보 시도
-            }
-          }
-          if (mounted) {
-            setProductOptions(names ?? (res.product?.name ? [res.product.name] : []))
-          }
-        } catch {
-          if (mounted) {
-            setProductOptions(res.product?.name ? [res.product.name] : [])
-          }
+        // 링크 응답 내 products 배열에서 상품명 추출(표시 순서 정렬)
+        const names =
+          Array.isArray(res.products)
+            ? [...res.products]
+                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                .map((p) => p.name)
+                .filter((n) => !!n)
+            : []
+        if (mounted) {
+          setProductOptions(names)
         }
       } catch (e: any) {
         setError(e?.message || '예약 정보를 불러오지 못했습니다.')
@@ -114,12 +91,10 @@ export default function ReservationLanding() {
     )
   }
 
-  const product = data.product ?? null
   const defaultProduct = useMemo(() => {
-    if (product?.name) return product.name
     if (productOptions && productOptions.length > 0) return productOptions[0]
     return ''
-  }, [product?.name, productOptions])
+  }, [productOptions])
 
   // 폼만 단독 표시: API에서 받은 상품명 1개를 옵션으로 주입하고 기본 선택 설정
   return <BookingForm productOptions={productOptions ?? undefined} defaultProduct={defaultProduct} />
