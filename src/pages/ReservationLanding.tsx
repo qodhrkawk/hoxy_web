@@ -76,9 +76,9 @@ export default function ReservationLanding() {
   // 로딩/오류 여부와 관계없이 폼만 렌더링(레이아웃 불변)
 
   const defaultProduct = useMemo(() => {
-    if (products && products.length > 0) return products[0].name
+    // 초기에는 선택하지 않은 상태 유지
     return ''
-  }, [products])
+  }, [])
 
   // 폼만 단독 표시: API에서 받은 상품명 1개를 옵션으로 주입하고 기본 선택 설정
   return (

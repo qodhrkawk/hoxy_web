@@ -69,7 +69,10 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
     }
 
     try {
-      await networkManager.post('/v1/reservations', body)
+      const response = await networkManager.post('/v1/reservations', body)
+      try {
+        console.log('[BookingForm] reservation created:', response)
+      } catch {}
     } catch (err: any) {
       // 네트워크 실패 시에도 사용자 경험 유지
       try {
@@ -169,21 +172,19 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
               onChange={(e) => setFormData({ ...formData, product: e.target.value })}
               required
             >
-              {(!products || products.length === 0) && (
-                <>
-                  <option value="">스냅 상품을 선택해 주세요</option>
-                  {['상품 1', '상품 2', '상품 3'].map((p) => (
+              {/* 항상 placeholder를 제공해 초기값이 선택되지 않도록 유지 */}
+              <option value="">스냅 상품을 선택해 주세요</option>
+              {products && products.length > 0
+                ? products.map((p) => (
+                    <option key={p.id} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))
+                : ['상품 1', '상품 2', '상품 3'].map((p) => (
                     <option key={p} value={p}>
                       {p}
                     </option>
                   ))}
-                </>
-              )}
-              {products && products.length > 0 && products.map((p) => (
-                <option key={p.id} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
             </select>
           </div>
 
