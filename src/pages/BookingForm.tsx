@@ -61,7 +61,7 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
     // 서버 요청 본문
     const body = {
       author_id: authorId ?? undefined,
-      title: formData.product ? `${formData.product} 예약` : '예약',
+      title: formData.product || '',
       customer_name: formData.name,
       phone_number: formData.phone,
       date_candidates: dateCandidates,
