@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import Calendar from '../components/Calendar'
 import './BookingForm.css'
 
+interface BookingFormProps {
+  productOptions?: string[]
+}
+
 interface BookingData {
   name: string
   phone: string
@@ -14,7 +18,7 @@ interface BookingData {
   termsAgreed: boolean
 }
 
-export default function BookingForm() {
+export default function BookingForm({ productOptions }: BookingFormProps) {
   const navigate = useNavigate()
   const [formData, setFormData] = useState<BookingData>({
     name: '',
@@ -135,9 +139,14 @@ export default function BookingForm() {
               required
             >
               <option value="">스냅 상품을 선택해 주세요</option>
-              <option value="product1">상품 1</option>
-              <option value="product2">상품 2</option>
-              <option value="product3">상품 3</option>
+              {(productOptions && productOptions.length > 0
+                ? productOptions
+                : ['상품 1', '상품 2', '상품 3']
+              ).map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
           </div>
 
