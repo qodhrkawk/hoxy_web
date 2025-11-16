@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { networkManager } from '../utils/NetworkManager'
 import './BookingDetail.css'
 
 interface BookingData {
@@ -11,7 +12,7 @@ interface BookingData {
 }
 
 interface ChatMessage {
-  id: number
+  id: string
   text: string
   timestamp: string
   isUser: boolean
@@ -32,6 +33,35 @@ export default function BookingDetail() {
       if (parsed.date2) parsed.date2 = new Date(parsed.date2)
       if (parsed.date3) parsed.date3 = new Date(parsed.date3)
       setBookingData(parsed)
+    }
+
+    // 예약 생성 시 저장해 둔 chatId로 메시지 조회
+    const storedChatId = localStorage.getItem('chatId')
+    if (storedChatId) {
+      ;(async () => {
+        try {
+          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`)
+          const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
+          const mapped: ChatMessage[] = apiMessages.map((m) => {
+            const created = m.created_at ? new Date(m.created_at) : new Date()
+            const time = `${created.getHours().toString().padStart(2, '0')}:${created
+              .getMinutes()
+              .toString()
+              .padStart(2, '0')}`
+            return {
+              id: String(m.id),
+              text: m.text ?? '',
+              timestamp: time,
+              isUser: m.sender === 'customer',
+            }
+          })
+          setMessages(mapped)
+        } catch (err) {
+          try {
+            console.error('[BookingDetail] failed to load chat messages:', err)
+          } catch {}
+        }
+      })()
     }
   }, [])
 
@@ -72,7 +102,7 @@ export default function BookingDetail() {
   const handleSendMessage = () => {
     if (message.trim()) {
       const newMessage: ChatMessage = {
-        id: Date.now(),
+        id: String(Date.now()),
         text: message,
         timestamp: getCurrentTime(),
         isUser: true,

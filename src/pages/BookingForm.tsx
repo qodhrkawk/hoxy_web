@@ -69,10 +69,18 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
     }
 
     try {
-      const response = await networkManager.post('/v1/reservations', body)
+      const response: any = await networkManager.post('/v1/reservations', body)
       try {
         console.log('[BookingForm] reservation created:', response)
       } catch {}
+
+      // 응답에서 chat id 추출하여 다음 화면에서 사용할 수 있도록 저장
+      const chatId: string | undefined = response?.chat?.id
+      if (chatId) {
+        try {
+          localStorage.setItem('chatId', chatId)
+        } catch {}
+      }
     } catch (err: any) {
       // 네트워크 실패 시에도 사용자 경험 유지
       try {
