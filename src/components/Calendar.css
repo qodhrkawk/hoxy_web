@@ -1,0 +1,138 @@
+.calendar-wrapper {
+  width: 100%;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  padding: 24px 20px;
+  background: white;
+}
+
+.calendar-container {
+  margin-bottom: 24px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.month-nav {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-nav:hover {
+  color: #000;
+}
+
+.month-label {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: #CACACA;
+  padding: 8px 0;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.day:hover:not(.other-month):not(.empty) {
+  background-color: #f5f5f5;
+}
+
+.day.other-month {
+  color: #CACACA;
+  font-weight: 400;
+}
+
+.day.selected {
+  background-color: #000;
+  color: white;
+}
+
+.day.empty {
+  cursor: default;
+}
+
+.date-selection-summary {
+  padding-top: 24px;
+  border-top: 1px solid #F0F0F0;
+}
+
+.summary-header {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000;
+  margin-bottom: 16px;
+}
+
+.selected-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.selected-date-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.priority-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #CACACA;
+}
+
+.selected-date-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  text-align: right;
+}
+
+.selected-date-value:empty::before {
+  content: '날짜를 선택해 주세요';
+  color: #CACACA;
+  font-size: 14px;
+  font-weight: 600;
+}
