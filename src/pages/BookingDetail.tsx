@@ -93,7 +93,7 @@ export default function BookingDetail() {
         try {
           console.log('[BookingDetail] fetching messages for chatId:', storedChatId)
           const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`)
-          console.log('[BookingDetail] messages response:', res)
+          console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
           const mapped: ChatMessage[] = apiMessages.map((m) => {
             const created = m.created_at ? new Date(m.created_at) : new Date()
