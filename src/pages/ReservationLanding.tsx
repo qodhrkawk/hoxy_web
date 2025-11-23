@@ -57,6 +57,15 @@ export default function ReservationLanding() {
         if (mounted) {
           setProducts(names.map((p) => ({ id: p.id, name: p.name })))
           setAuthorId(res.artist?.id ?? null)
+          // 작가 정보를 localStorage에 저장 (채팅 화면에서 사용)
+          if (res.artist) {
+            try {
+              localStorage.setItem('artistInfo', JSON.stringify({
+                name: res.artist.name,
+                brand_name: res.artist.brand_name,
+              }))
+            } catch {}
+          }
           try {
             console.log('[ReservationLanding] product options:', names.map((p) => p.name))
           } catch {}

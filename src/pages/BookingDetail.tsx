@@ -22,6 +22,7 @@ export default function BookingDetail() {
   const [bookingData, setBookingData] = useState<BookingData | null>(null)
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [artistName, setArtistName] = useState<string>('작가님')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,6 +34,17 @@ export default function BookingDetail() {
       if (parsed.date2) parsed.date2 = new Date(parsed.date2)
       if (parsed.date3) parsed.date3 = new Date(parsed.date3)
       setBookingData(parsed)
+    }
+
+    // 작가 정보 로드
+    const artistInfoStr = localStorage.getItem('artistInfo')
+    if (artistInfoStr) {
+      try {
+        const artistInfo = JSON.parse(artistInfoStr)
+        setArtistName(artistInfo.brand_name || artistInfo.name || '작가님')
+      } catch {
+        // 파싱 실패 시 기본값 유지
+      }
     }
 
     // 예약 생성 시 저장해 둔 chatId로 메시지 조회
@@ -162,7 +174,7 @@ export default function BookingDetail() {
   return (
     <div className="chat-container">
       <div className="chat-content">
-        <h1 className="chat-header">{'{'}작가명{'}'}</h1>
+        <h1 className="chat-header">{artistName}</h1>
 
         <div className="welcome-message">
           <p>
