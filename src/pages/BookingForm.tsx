@@ -70,16 +70,25 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
 
     try {
       const response: any = await networkManager.post('/v1/reservations', body)
-      console.log('[BookingForm] reservation created:', response)
+      console.log('[BookingForm] reservation created - full response:', JSON.stringify(response, null, 2))
 
-      // 응답에서 chat id 추출하여 다음 화면에서 사용할 수 있도록 저장
-      const chatId: string | undefined = response?.chat?.id
-      console.log('[BookingForm] extracted chatId:', chatId)
+      // 응답에서 chat id 추출: response.chat.id 또는 response.reservation.chat_id
+      const chatId: string | undefined = response?.chat?.id || response?.reservation?.chat_id
+      console.log('[BookingForm] extracted chatId:', chatId, 'from chat.id:', response?.chat?.id, 'or reservation.chat_id:', response?.reservation?.chat_id)
+      
       if (chatId) {
         localStorage.setItem('chatId', chatId)
         console.log('[BookingForm] chatId saved to localStorage:', chatId)
       } else {
-        console.warn('[BookingForm] chatId not found in response:', response)
+        console.error('[BookingForm] chatId not found in response. Response structure:', {
+          hasChat: !!response?.chat,
+          chatId: response?.chat?.id,
+          hasReservation: !!response?.reservation,
+          reservationChatId: response?.reservation?.chat_id,
+          fullResponse: response,
+        })
+        alert('예약은 생성되었지만 채팅방 정보를 찾을 수 없습니다. 관리자에게 문의해 주세요.')
+        return
       }
     } catch (err: any) {
       // 네트워크 실패 시에도 사용자 경험 유지
