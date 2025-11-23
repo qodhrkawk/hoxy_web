@@ -37,10 +37,13 @@ export default function BookingDetail() {
 
     // 예약 생성 시 저장해 둔 chatId로 메시지 조회
     const storedChatId = localStorage.getItem('chatId')
+    console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
     if (storedChatId) {
       ;(async () => {
         try {
+          console.log('[BookingDetail] fetching messages for chatId:', storedChatId)
           const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`)
+          console.log('[BookingDetail] messages response:', res)
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
           const mapped: ChatMessage[] = apiMessages.map((m) => {
             const created = m.created_at ? new Date(m.created_at) : new Date()
@@ -55,13 +58,14 @@ export default function BookingDetail() {
               isUser: m.sender === 'customer',
             }
           })
+          console.log('[BookingDetail] mapped messages:', mapped)
           setMessages(mapped)
         } catch (err) {
-          try {
-            console.error('[BookingDetail] failed to load chat messages:', err)
-          } catch {}
+          console.error('[BookingDetail] failed to load chat messages:', err)
         }
       })()
+    } else {
+      console.warn('[BookingDetail] chatId not found in localStorage')
     }
   }, [])
 

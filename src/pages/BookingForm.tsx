@@ -70,23 +70,22 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
 
     try {
       const response: any = await networkManager.post('/v1/reservations', body)
-      try {
-        console.log('[BookingForm] reservation created:', response)
-      } catch {}
+      console.log('[BookingForm] reservation created:', response)
 
       // 응답에서 chat id 추출하여 다음 화면에서 사용할 수 있도록 저장
       const chatId: string | undefined = response?.chat?.id
+      console.log('[BookingForm] extracted chatId:', chatId)
       if (chatId) {
-        try {
-          localStorage.setItem('chatId', chatId)
-        } catch {}
+        localStorage.setItem('chatId', chatId)
+        console.log('[BookingForm] chatId saved to localStorage:', chatId)
+      } else {
+        console.warn('[BookingForm] chatId not found in response:', response)
       }
     } catch (err: any) {
       // 네트워크 실패 시에도 사용자 경험 유지
-      try {
-        console.error('[BookingForm] reservation create error:', err)
-        alert('예약 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
-      } catch {}
+      console.error('[BookingForm] reservation create error:', err)
+      alert('예약 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+      return // 에러 발생 시 네비게이션 중단
     }
 
     // 예약 데이터를 localStorage에 저장(기존 동작 유지)
