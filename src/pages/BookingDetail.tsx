@@ -235,7 +235,7 @@ export default function BookingDetail() {
               </p>
             </div>
           </div>
-          <div className="timestamp">읽음<br />오후 8:35</div>
+          <div className="timestamp">오후 8:35</div>
         </div>
 
         {messages.map((msg) => (
