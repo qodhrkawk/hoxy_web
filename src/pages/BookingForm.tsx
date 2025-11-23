@@ -33,6 +33,7 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
     privacyAgreed: false,
     termsAgreed: false,
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 필수 필드 모두 채워졌는지 확인
   const isFormValid =
@@ -45,7 +46,9 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isFormValid) return
+    if (!isFormValid || isSubmitting) return
+    
+    setIsSubmitting(true)
 
     // 매핑: 선택한 상품명 -> 상품 ID
     const selectedProductId =
@@ -94,12 +97,14 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
           fullResponse: response,
         })
         alert('예약은 생성되었지만 채팅방 정보를 찾을 수 없습니다. 관리자에게 문의해 주세요.')
+        setIsSubmitting(false)
         return
       }
     } catch (err: any) {
       // 네트워크 실패 시에도 사용자 경험 유지
       console.error('[BookingForm] reservation create error:', err)
       alert('예약 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+      setIsSubmitting(false)
       return // 에러 발생 시 네비게이션 중단
     }
 
@@ -251,8 +256,8 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
             </div>
           </div>
 
-          <button type="submit" className="submit-button" disabled={!isFormValid}>
-            예약 문의하기
+          <button type="submit" className="submit-button" disabled={!isFormValid || isSubmitting}>
+            {isSubmitting ? '전송 중...' : '예약 문의하기'}
           </button>
         </form>
       </div>
