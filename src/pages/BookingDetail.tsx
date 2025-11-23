@@ -100,13 +100,30 @@ export default function BookingDetail() {
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
           const mapped: ChatMessage[] = apiMessages.map((m) => {
             const created = m.created_at ? new Date(m.created_at) : new Date()
-            const time = `${created.getHours().toString().padStart(2, '0')}:${created
-              .getMinutes()
-              .toString()
-              .padStart(2, '0')}`
+            const hours = created.getHours()
+            const minutes = created.getMinutes()
+            const period = hours >= 12 ? '오후' : '오전'
+            const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+            const time = `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
+            
+            // 메시지 텍스트 추출
+            let text = m.text ?? ''
+            if (!text && m.content) {
+              try {
+                const content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
+                if (m.type === 'confirmReservation') {
+                  text = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
+                } else {
+                  text = typeof content === 'string' ? content : JSON.stringify(content)
+                }
+              } catch {
+                text = String(m.content)
+              }
+            }
+            
             return {
               id: String(m.id),
-              text: m.text ?? m.content ?? '',
+              text: text || '메시지 없음',
               timestamp: time,
               isUser: m.sender === 'customer',
             }
@@ -220,35 +237,34 @@ export default function BookingDetail() {
           </div>
         </div>
 
-        <div className="message-group left">
-          <div className="ai-card">
-            <h3 className="card-title">
-              <span className="icon">🤖</span> HOXY AI
-            </h3>
-            <div className="card-content">
-              <p>
-                작가님 일정을 확인해보니, 희망하시는 모든 날짜에 촬영이 가능할 것 같아요! ✨
-                <br />
-                작가님의 확인 후 빠르게 답장 주실 거예요.
-                <br />
-                답장이 도착하면 카카오 알림톡으로 바로 안내드릴게요! 💌
-              </p>
-              <p>
-                원하시는 시간대/촬영지역/컨셉도 함께 남겨 주시면 상담진행에 큰 도움이 될 수 있어요!
-              </p>
-            </div>
-          </div>
-          <div className="timestamp">오후 8:35</div>
-        </div>
-
-        {messages.map((msg) => (
-          <div key={msg.id} className="message-group right">
-            <div className="timestamp">읽음<br />{msg.timestamp}</div>
-            <div className="user-message">
-              <p>{msg.text}</p>
-            </div>
-          </div>
-        ))}
+        {messages.map((msg) => {
+          if (msg.isUser) {
+            // 사용자 메시지: 오른쪽
+            return (
+              <div key={msg.id} className="message-group right">
+                <div className="timestamp">읽음<br />{msg.timestamp}</div>
+                <div className="user-message">
+                  <p>{msg.text}</p>
+                </div>
+              </div>
+            )
+          } else {
+            // 상대방 메시지 (작가/AI): 왼쪽
+            return (
+              <div key={msg.id} className="message-group left">
+                <div className="ai-card">
+                  <h3 className="card-title">
+                    <span className="icon">🤖</span> HOXY AI
+                  </h3>
+                  <div className="card-content">
+                    <p>{msg.text}</p>
+                  </div>
+                </div>
+                <div className="timestamp">{msg.timestamp}</div>
+              </div>
+            )
+          }
+        })}
         <div ref={messagesEndRef} />
       </div>
 
