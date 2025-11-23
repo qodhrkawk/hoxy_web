@@ -38,6 +38,44 @@ export default function BookingDetail() {
     // 예약 생성 시 저장해 둔 chatId로 메시지 조회
     const storedChatId = localStorage.getItem('chatId')
     console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
+    
+    // 예약 응답에 포함된 첫 메시지 먼저 표시
+    const initialMessageStr = localStorage.getItem('initialMessage')
+    if (initialMessageStr) {
+      try {
+        const initialMsg: any = JSON.parse(initialMessageStr)
+        console.log('[BookingDetail] initial message from reservation response:', initialMsg)
+        
+        const created = initialMsg.created_at ? new Date(initialMsg.created_at) : new Date()
+        const time = `${created.getHours().toString().padStart(2, '0')}:${created.getMinutes().toString().padStart(2, '0')}`
+        
+        // confirmReservation 타입 메시지는 content를 파싱해서 표시
+        let displayText = ''
+        if (initialMsg.type === 'confirmReservation' && initialMsg.content) {
+          try {
+            const content = JSON.parse(initialMsg.content)
+            displayText = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
+          } catch {
+            displayText = initialMsg.content
+          }
+        } else {
+          displayText = initialMsg.text || initialMsg.content || '예약이 접수되었습니다.'
+        }
+        
+        const initialChatMessage: ChatMessage = {
+          id: String(initialMsg.id),
+          text: displayText,
+          timestamp: time,
+          isUser: initialMsg.sender === 'customer',
+        }
+        setMessages([initialChatMessage])
+        // 표시 후 localStorage에서 제거 (중복 방지)
+        localStorage.removeItem('initialMessage')
+      } catch (err) {
+        console.error('[BookingDetail] failed to parse initial message:', err)
+      }
+    }
+    
     if (storedChatId) {
       ;(async () => {
         try {
@@ -53,13 +91,18 @@ export default function BookingDetail() {
               .padStart(2, '0')}`
             return {
               id: String(m.id),
-              text: m.text ?? '',
+              text: m.text ?? m.content ?? '',
               timestamp: time,
               isUser: m.sender === 'customer',
             }
           })
           console.log('[BookingDetail] mapped messages:', mapped)
-          setMessages(mapped)
+          // 초기 메시지가 있으면 그 뒤에 추가, 없으면 전체 교체
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id))
+            const newMessages = mapped.filter((m) => !existingIds.has(m.id))
+            return [...prev, ...newMessages]
+          })
         } catch (err) {
           console.error('[BookingDetail] failed to load chat messages:', err)
         }

@@ -79,6 +79,12 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
       if (chatId) {
         localStorage.setItem('chatId', chatId)
         console.log('[BookingForm] chatId saved to localStorage:', chatId)
+        
+        // 예약 응답에 포함된 첫 메시지도 저장 (채팅 화면에서 먼저 표시하기 위해)
+        if (response?.message) {
+          localStorage.setItem('initialMessage', JSON.stringify(response.message))
+          console.log('[BookingForm] initial message saved:', response.message)
+        }
       } else {
         console.error('[BookingForm] chatId not found in response. Response structure:', {
           hasChat: !!response?.chat,
