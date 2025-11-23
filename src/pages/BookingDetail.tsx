@@ -91,8 +91,11 @@ export default function BookingDetail() {
     if (storedChatId) {
       ;(async () => {
         try {
-          console.log('[BookingDetail] fetching messages for chatId:', storedChatId)
-          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`)
+          // 예약 링크 토큰을 Authorization 헤더에 포함
+          const reservationToken = localStorage.getItem('reservationToken')
+          const headers = reservationToken ? { Authorization: `Bearer ${reservationToken}` } : undefined
+          console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with token:', reservationToken ? 'present' : 'missing')
+          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, undefined, headers)
           console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
           const mapped: ChatMessage[] = apiMessages.map((m) => {

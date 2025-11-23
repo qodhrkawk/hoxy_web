@@ -40,6 +40,10 @@ export default function ReservationLanding() {
         if (!token) {
           throw new Error('유효하지 않은 링크입니다.')
         }
+        // 예약 링크 토큰을 localStorage에 저장 (채팅 메시지 요청 시 인증에 사용)
+        try {
+          localStorage.setItem('reservationToken', token)
+        } catch {}
         const res = await networkManager.get<ReservationLinkResponse>(`/v1/reservations/links/${token}`)
         if (!mounted) return
         // 서버 응답 로깅
