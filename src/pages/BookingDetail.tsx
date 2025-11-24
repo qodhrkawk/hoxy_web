@@ -185,6 +185,7 @@ export default function BookingDetail() {
       text: messageText,
       timestamp: getCurrentTime(),
       isUser: true,
+      type: 'text',
     }
     setMessages([...messages, newMessage])
     
