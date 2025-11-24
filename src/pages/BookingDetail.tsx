@@ -91,24 +91,14 @@ export default function BookingDetail() {
     if (storedChatId) {
       ;(async () => {
         try {
-          // 예약 링크 토큰 또는 예약 생성 응답의 토큰을 Authorization 헤더에 포함
-          let reservationToken = localStorage.getItem('reservationToken')
-          
-          // 토큰이 없으면 핸드폰 번호로 토큰 생성 시도 (서버가 핸드폰 번호 기반 인증을 기대하는 경우)
-          if (!reservationToken && bookingData?.phone) {
-            const phoneWithoutHyphens = bookingData.phone.replace(/-/g, '')
-            console.log('[BookingDetail] no token found, using phone number for auth:', phoneWithoutHyphens)
-            // 서버가 핸드폰 번호를 토큰으로 사용하는 경우를 대비
-            reservationToken = phoneWithoutHyphens
-          }
-          
-          const headers = reservationToken ? { Authorization: `Bearer ${reservationToken}` } : undefined
+          // phone number를 Authorization 헤더에 사용
+          const phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
+          const headers = phoneWithoutHyphens ? { Authorization: `Bearer ${phoneWithoutHyphens}` } : undefined
           
           // GET 요청에 phone number를 쿼리 파라미터로 추가
-          const phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
           const params = phoneWithoutHyphens ? { phone: phoneWithoutHyphens } : undefined
           
-          console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with token:', reservationToken ? 'present' : 'missing', reservationToken ? `(${reservationToken.substring(0, 10)}...)` : '', 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
+          console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
           console.log('[BookingDetail] GET request headers:', JSON.stringify(headers, null, 2))
           console.log('[BookingDetail] GET request params:', JSON.stringify(params, null, 2))
           const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, headers)
@@ -212,7 +202,6 @@ export default function BookingDetail() {
     
     // 서버로 메시지 전송
     const storedChatId = localStorage.getItem('chatId')
-    const reservationToken = localStorage.getItem('reservationToken')
     const phone = bookingData?.phone?.replace(/-/g, '') || '' // 하이픈 제거
     
     if (!storedChatId) {
@@ -221,7 +210,8 @@ export default function BookingDetail() {
     }
     
     try {
-      const headers = reservationToken ? { Authorization: `Bearer ${reservationToken}` } : undefined
+      // phone number를 Authorization 헤더에 사용
+      const headers = phone ? { Authorization: `Bearer ${phone}` } : undefined
       const body: any = {
         text: messageText,
         sender: 'customer',
