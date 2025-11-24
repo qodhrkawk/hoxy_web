@@ -28,6 +28,7 @@ interface ChatMessage {
   isRead?: boolean
   imageUrls?: string[]
   isUploading?: boolean
+  dateString?: string // YYYY-MM-DD 형식
 }
 
 export default function BookingDetail() {
@@ -112,6 +113,9 @@ export default function BookingDetail() {
             const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
             const time = `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
 
+            // 날짜 문자열 (YYYY-MM-DD)
+            const dateString = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`
+
             // 메시지 텍스트 추출
             let text = m.text ?? ''
             let parsedContent = null
@@ -172,6 +176,7 @@ export default function BookingDetail() {
               content: parsedContent,
               isRead: m.isRead || false,
               imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+              dateString,
             }
           })
           console.log('[BookingDetail] mapped messages:', mapped)
@@ -217,6 +222,9 @@ export default function BookingDetail() {
           const period = hours >= 12 ? '오후' : '오전'
           const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
           const time = `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
+
+          // 날짜 문자열 (YYYY-MM-DD)
+          const dateString = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`
 
           let text = newMsg.text ?? ''
           let parsedContent = null
@@ -277,6 +285,7 @@ export default function BookingDetail() {
             content: parsedContent,
             isRead: newMsg.isRead || false,
             imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+            dateString,
           }
 
           // 중복 방지: 이미 존재하는 메시지는 추가하지 않음
@@ -421,6 +430,8 @@ export default function BookingDetail() {
       const tempImageUrls = await readFilesAsDataURL(files)
 
       // 낙관적 업데이트: 로컬에 먼저 표시 (업로딩 상태)
+      const now = new Date()
+      const dateString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
       const tempMessage: ChatMessage = {
         id: tempId,
         text: '',
@@ -430,6 +441,7 @@ export default function BookingDetail() {
         imageUrls: tempImageUrls,
         isUploading: true,
         isRead: false,
+        dateString,
       }
       setMessages((prev) => [...prev, tempMessage])
 
@@ -519,6 +531,8 @@ export default function BookingDetail() {
 
     // 로컬에 먼저 표시 (낙관적 업데이트)
     const tempId = String(Date.now())
+    const now = new Date()
+    const dateString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     const newMessage: ChatMessage = {
       id: tempId,
       text: messageText,
@@ -526,6 +540,7 @@ export default function BookingDetail() {
       isUser: true,
       type: 'text',
       isRead: false, // 전송한 메시지는 초기에 안읽음 상태
+      dateString,
     }
     setMessages([...messages, newMessage])
 
@@ -599,9 +614,20 @@ export default function BookingDetail() {
           </p>
         </div>
 
-        <div className="date-separator">{formatDateSeparator()}</div>
+        {messages.map((msg, index) => {
+          // 날짜 구분자 표시: 첫 메시지이거나 이전 메시지와 날짜가 다른 경우
+          const showDateSeparator = index === 0 || (messages[index - 1]?.dateString !== msg.dateString)
 
-        {messages.map((msg) => {
+          // 날짜 포맷 함수
+          const formatDateSeparatorForMessage = (dateStr?: string) => {
+            if (!dateStr) return formatDateSeparator() // 기본값 (오늘)
+            const [year, month, day] = dateStr.split('-').map(Number)
+            const date = new Date(year, month - 1, day)
+            const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+            const dayName = days[date.getDay()]
+            return `${year}년 ${month}월 ${day}일 ${dayName}`
+          }
+
           // 이미지 메시지: imageUrls가 있으면 이미지로 표시
           if (msg.imageUrls && msg.imageUrls.length > 0) {
             const renderImageLayout = () => {
@@ -662,7 +688,11 @@ export default function BookingDetail() {
             }
 
             return (
-              <div key={msg.id} className={`message-group ${msg.isUser ? 'right' : 'left'}`}>
+              <>
+                {showDateSeparator && (
+                  <div className="date-separator">{formatDateSeparatorForMessage(msg.dateString)}</div>
+                )}
+                <div className={`message-group ${msg.isUser ? 'right' : 'left'}`}>
                 {msg.isUser ? (
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
@@ -692,6 +722,7 @@ export default function BookingDetail() {
                   </>
                 )}
               </div>
+              </>
             )
           }
 
@@ -711,9 +742,13 @@ export default function BookingDetail() {
             }
 
             return (
-              <div key={msg.id} className="message-group right">
-                <div className="timestamp">{msg.timestamp}</div>
-                <div className="booking-card">
+              <>
+                {showDateSeparator && (
+                  <div className="date-separator">{formatDateSeparatorForMessage(msg.dateString)}</div>
+                )}
+                <div className="message-group right">
+                  <div className="timestamp">{msg.timestamp}</div>
+                  <div className="booking-card">
                   <h3 className="card-title">
                     <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
                     예약 접수
@@ -741,14 +776,19 @@ export default function BookingDetail() {
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
+              </>
             )
           }
 
           // 일반 텍스트 타입 사용자 메시지: 오른쪽
           if (msg.isUser && msg.type === 'text') {
             return (
-              <div key={msg.id} className="message-group right">
+              <>
+                {showDateSeparator && (
+                  <div className="date-separator">{formatDateSeparatorForMessage(msg.dateString)}</div>
+                )}
+                <div className="message-group right">
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                   <div className="read-status">{msg.isRead ? '읽음' : '안읽음'}</div>
                   <div className="timestamp">{msg.timestamp}</div>
@@ -756,14 +796,19 @@ export default function BookingDetail() {
                 <div className="user-message">
                   <p>{msg.text}</p>
                 </div>
-              </div>
+                </div>
+              </>
             )
           }
 
           // system 타입 메시지 (AI): 왼쪽 HOXY AI 카드
           if (msg.type === 'system') {
             return (
-              <div key={msg.id} className="message-group left">
+              <>
+                {showDateSeparator && (
+                  <div className="date-separator">{formatDateSeparatorForMessage(msg.dateString)}</div>
+                )}
+                <div className="message-group left">
                 <div className="ai-card">
                   <h3 className="card-title">
                     <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
@@ -774,19 +819,25 @@ export default function BookingDetail() {
                   </div>
                 </div>
                 <div className="timestamp">{msg.timestamp}</div>
-              </div>
+                </div>
+              </>
             )
           }
 
           // author 메시지: 왼쪽 일반 버블 (타이틀/이미지 없음)
           if (!msg.isUser) {
             return (
-              <div key={msg.id} className="message-group left">
-                <div className="author-message">
-                  <p>{msg.text}</p>
+              <>
+                {showDateSeparator && (
+                  <div className="date-separator">{formatDateSeparatorForMessage(msg.dateString)}</div>
+                )}
+                <div className="message-group left">
+                  <div className="author-message">
+                    <p>{msg.text}</p>
+                  </div>
+                  <div className="timestamp">{msg.timestamp}</div>
                 </div>
-                <div className="timestamp">{msg.timestamp}</div>
-              </div>
+              </>
             )
           }
 
