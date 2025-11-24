@@ -500,7 +500,7 @@ export default function BookingDetail() {
                 <div className="timestamp">{msg.timestamp}</div>
                 <div className="booking-card">
                   <h3 className="card-title">
-                    <img src="/images/LOGO.png" alt="HOXY" className="card-icon" />
+                    <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
                     예약 접수
                   </h3>
                   <div className="card-content">
@@ -548,7 +548,7 @@ export default function BookingDetail() {
               <div key={msg.id} className="message-group left">
                 <div className="ai-card">
                   <h3 className="card-title">
-                    <img src="/images/LOGO.png" alt="HOXY" className="card-icon" />
+                    <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
                     HOXY AI
                   </h3>
                   <div className="card-content">
