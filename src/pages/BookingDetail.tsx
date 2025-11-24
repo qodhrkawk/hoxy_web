@@ -267,8 +267,11 @@ export default function BookingDetail() {
         <div className="date-separator">{formatDateSeparator()}</div>
 
         {messages.map((msg) => {
-          // reservationInquiry 타입 메시지: 예약 접수 카드
-          if (msg.type === 'reservationInquiry' && msg.content) {
+          // reservationInquiry 타입 메시지: 예약 접수 카드만 표시
+          if (msg.type === 'reservationInquiry') {
+            // content가 없으면 렌더링하지 않음 (오류 방지)
+            if (!msg.content) return null
+
             const content = msg.content
             const dateCandidates = content.dateCandidates || []
 
@@ -311,8 +314,10 @@ export default function BookingDetail() {
                 </div>
               </div>
             )
-          } else if (msg.isUser) {
-            // 일반 사용자 메시지: 오른쪽
+          }
+
+          // 일반 텍스트 타입 사용자 메시지: 오른쪽
+          if (msg.isUser && msg.type === 'text') {
             return (
               <div key={msg.id} className="message-group right">
                 <div className="timestamp">{msg.timestamp}</div>
@@ -321,8 +326,10 @@ export default function BookingDetail() {
                 </div>
               </div>
             )
-          } else {
-            // system 메시지 (AI): 왼쪽
+          }
+
+          // system 타입 메시지 (AI): 왼쪽
+          if (msg.type === 'system') {
             return (
               <div key={msg.id} className="message-group left">
                 <div className="ai-card">
@@ -337,6 +344,9 @@ export default function BookingDetail() {
               </div>
             )
           }
+
+          // 그 외 타입은 렌더링하지 않음
+          return null
         })}
         <div ref={messagesEndRef} />
       </div>
