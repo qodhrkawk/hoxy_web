@@ -139,13 +139,25 @@ export default function BookingDetail() {
             let imageUrls: string[] = []
             if (m.media_url) {
               console.log('[BookingDetail] parsing media_url:', m.media_url, 'type:', typeof m.media_url)
-              try {
-                imageUrls = Array.isArray(m.media_url) ? m.media_url : JSON.parse(m.media_url)
-                console.log('[BookingDetail] parsed imageUrls:', imageUrls)
-              } catch (e) {
-                console.error('[BookingDetail] failed to parse media_url:', e)
-                imageUrls = []
+              if (Array.isArray(m.media_url)) {
+                // 이미 배열인 경우
+                imageUrls = m.media_url
+              } else if (typeof m.media_url === 'string') {
+                // 문자열인 경우
+                if (m.media_url.startsWith('[')) {
+                  // JSON 배열 문자열
+                  try {
+                    imageUrls = JSON.parse(m.media_url)
+                  } catch (e) {
+                    console.error('[BookingDetail] failed to parse JSON array:', e)
+                    imageUrls = []
+                  }
+                } else {
+                  // 단일 URL 문자열
+                  imageUrls = [m.media_url]
+                }
               }
+              console.log('[BookingDetail] parsed imageUrls:', imageUrls)
             }
 
             return {
@@ -231,11 +243,26 @@ export default function BookingDetail() {
           // 이미지 URL 파싱 (실시간)
           let imageUrls: string[] = []
           if (newMsg.media_url) {
-            try {
-              imageUrls = Array.isArray(newMsg.media_url) ? newMsg.media_url : JSON.parse(newMsg.media_url)
-            } catch {
-              imageUrls = []
+            console.log('[BookingDetail] realtime parsing media_url:', newMsg.media_url, 'type:', typeof newMsg.media_url)
+            if (Array.isArray(newMsg.media_url)) {
+              // 이미 배열인 경우
+              imageUrls = newMsg.media_url
+            } else if (typeof newMsg.media_url === 'string') {
+              // 문자열인 경우
+              if (newMsg.media_url.startsWith('[')) {
+                // JSON 배열 문자열
+                try {
+                  imageUrls = JSON.parse(newMsg.media_url)
+                } catch (e) {
+                  console.error('[BookingDetail] realtime failed to parse JSON array:', e)
+                  imageUrls = []
+                }
+              } else {
+                // 단일 URL 문자열
+                imageUrls = [newMsg.media_url]
+              }
             }
+            console.log('[BookingDetail] realtime parsed imageUrls:', imageUrls)
           }
 
           const chatMessage: ChatMessage = {
