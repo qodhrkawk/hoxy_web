@@ -25,6 +25,7 @@ interface ChatMessage {
   isUser: boolean
   type?: string
   content?: any
+  isRead?: boolean
 }
 
 export default function BookingDetail() {
@@ -140,6 +141,7 @@ export default function BookingDetail() {
               isUser: m.sender === 'customer',
               type: m.type,
               content: parsedContent,
+              isRead: m.isRead || false,
             }
           })
           console.log('[BookingDetail] mapped messages:', mapped)
@@ -218,6 +220,7 @@ export default function BookingDetail() {
             isUser: newMsg.sender === 'customer',
             type: newMsg.type,
             content: parsedContent,
+            isRead: newMsg.isRead || false,
           }
 
           // 중복 방지: 이미 존재하는 메시지는 추가하지 않음
@@ -404,6 +407,7 @@ export default function BookingDetail() {
       timestamp: getCurrentTime(),
       isUser: true,
       type: 'text',
+      isRead: false, // 전송한 메시지는 초기에 안읽음 상태
     }
     setMessages([...messages, newMessage])
 
@@ -534,7 +538,10 @@ export default function BookingDetail() {
           if (msg.isUser && msg.type === 'text') {
             return (
               <div key={msg.id} className="message-group right">
-                <div className="timestamp">{msg.timestamp}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                  <div className="read-status">{msg.isRead ? '읽음' : '안읽음'}</div>
+                  <div className="timestamp">{msg.timestamp}</div>
+                </div>
                 <div className="user-message">
                   <p>{msg.text}</p>
                 </div>
