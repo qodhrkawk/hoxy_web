@@ -133,6 +133,7 @@ export default function BookingDetail() {
               try {
                 const content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
                 if (m.type === 'confirmReservation') {
+                  console.log('[BookingDetail] confirmReservation content:', JSON.stringify(content, null, 2))
                   text = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
                 } else {
                   text = typeof content === 'string' ? content : JSON.stringify(content)
@@ -245,6 +246,7 @@ export default function BookingDetail() {
             try {
               const content = typeof newMsg.content === 'string' ? JSON.parse(newMsg.content) : newMsg.content
               if (newMsg.type === 'confirmReservation') {
+                console.log('[BookingDetail] realtime confirmReservation content:', JSON.stringify(content, null, 2))
                 text = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
               } else {
                 text = typeof content === 'string' ? content : JSON.stringify(content)
