@@ -138,9 +138,12 @@ export default function BookingDetail() {
             // 이미지 URL 파싱
             let imageUrls: string[] = []
             if (m.media_url) {
+              console.log('[BookingDetail] parsing media_url:', m.media_url, 'type:', typeof m.media_url)
               try {
                 imageUrls = Array.isArray(m.media_url) ? m.media_url : JSON.parse(m.media_url)
-              } catch {
+                console.log('[BookingDetail] parsed imageUrls:', imageUrls)
+              } catch (e) {
+                console.error('[BookingDetail] failed to parse media_url:', e)
                 imageUrls = []
               }
             }
