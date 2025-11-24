@@ -505,8 +505,8 @@ export default function BookingDetail() {
             )
           }
 
-          // system 타입 메시지 (AI): 왼쪽
-          if (msg.type === 'system') {
+          // system 타입 또는 작가 메시지 (AI/작가): 왼쪽
+          if (msg.type === 'system' || !msg.isUser) {
             return (
               <div key={msg.id} className="message-group left">
                 <div className="ai-card">
