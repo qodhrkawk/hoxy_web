@@ -120,24 +120,22 @@ export default function BookingDetail() {
             let text = m.text ?? ''
             let parsedContent = null
 
-            // reservationInquiry 타입은 content를 파싱해서 저장
-            if (m.type === 'reservationInquiry' && m.content) {
+            // reservationInquiry, confirmReservation 타입은 content를 파싱해서 저장
+            if ((m.type === 'reservationInquiry' || m.type === 'confirmReservation') && m.content) {
               try {
                 parsedContent = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
+                if (m.type === 'confirmReservation') {
+                  console.log('[BookingDetail] confirmReservation content:', JSON.stringify(parsedContent, null, 2))
+                }
               } catch {
                 parsedContent = null
               }
             }
 
-            if (!text && m.content && m.type !== 'reservationInquiry') {
+            if (!text && m.content && m.type !== 'reservationInquiry' && m.type !== 'confirmReservation') {
               try {
                 const content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
-                if (m.type === 'confirmReservation') {
-                  console.log('[BookingDetail] confirmReservation content:', JSON.stringify(content, null, 2))
-                  text = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
-                } else {
-                  text = typeof content === 'string' ? content : JSON.stringify(content)
-                }
+                text = typeof content === 'string' ? content : JSON.stringify(content)
               } catch {
                 text = String(m.content)
               }
@@ -233,24 +231,22 @@ export default function BookingDetail() {
           let text = newMsg.text ?? ''
           let parsedContent = null
 
-          // reservationInquiry 타입은 content를 파싱
-          if (newMsg.type === 'reservationInquiry' && newMsg.content) {
+          // reservationInquiry, confirmReservation 타입은 content를 파싱
+          if ((newMsg.type === 'reservationInquiry' || newMsg.type === 'confirmReservation') && newMsg.content) {
             try {
               parsedContent = typeof newMsg.content === 'string' ? JSON.parse(newMsg.content) : newMsg.content
+              if (newMsg.type === 'confirmReservation') {
+                console.log('[BookingDetail] realtime confirmReservation content:', JSON.stringify(parsedContent, null, 2))
+              }
             } catch {
               parsedContent = null
             }
           }
 
-          if (!text && newMsg.content && newMsg.type !== 'reservationInquiry') {
+          if (!text && newMsg.content && newMsg.type !== 'reservationInquiry' && newMsg.type !== 'confirmReservation') {
             try {
               const content = typeof newMsg.content === 'string' ? JSON.parse(newMsg.content) : newMsg.content
-              if (newMsg.type === 'confirmReservation') {
-                console.log('[BookingDetail] realtime confirmReservation content:', JSON.stringify(content, null, 2))
-                text = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
-              } else {
-                text = typeof content === 'string' ? content : JSON.stringify(content)
-              }
+              text = typeof content === 'string' ? content : JSON.stringify(content)
             } catch {
               text = String(newMsg.content)
             }
@@ -819,8 +815,76 @@ export default function BookingDetail() {
             )
           }
 
-          // 일반 텍스트 타입 사용자 메시지: 오른쪽 (confirmReservation 포함)
-          if (msg.isUser && (msg.type === 'text' || msg.type === 'confirmReservation')) {
+          // confirmReservation 타입 메시지: 예약금 안내 카드 (왼쪽)
+          if (msg.type === 'confirmReservation' && !msg.isUser) {
+            // content 파싱
+            let reservationContent: any = null
+            try {
+              reservationContent = msg.content || (typeof msg.text === 'string' && msg.text.includes('{') ? JSON.parse(msg.text) : null)
+            } catch {
+              // 파싱 실패 시 일반 텍스트로 표시
+            }
+
+            if (reservationContent) {
+              const confirmedDate = reservationContent.confirmedDate || ''
+              const bankName = reservationContent.bank_name || reservationContent.bankName || ''
+              const accountNumber = reservationContent.bank_account_number || reservationContent.accountNumber || ''
+              const accountHolder = reservationContent.account_holder_name || ''
+
+              // 날짜 포맷 (YYYY-MM-DD -> YYYY. M. D(요일))
+              const formatConfirmedDate = (dateStr: string) => {
+                if (!dateStr) return ''
+                const d = new Date(dateStr)
+                const days = ['일', '월', '화', '수', '목', '금', '토']
+                return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}(${days[d.getDay()]})`
+              }
+
+              return (
+                <>
+                  {showDateSeparator && (
+                    <div className="date-separator">{formatDateSeparatorForMessage(msg.dateString)}</div>
+                  )}
+                  <div className="message-group left">
+                    <div className="confirmation-card">
+                      <h3 className="card-title">
+                        <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
+                        예약금 안내
+                      </h3>
+                      <div className="confirmation-content">
+                        <div className="confirmation-date">
+                          📅 {formatConfirmedDate(confirmedDate)}로 예약이 진행될 예정이에요.
+                        </div>
+                        <div className="confirmation-description">
+                          아래의 계좌로 예약금을 이체해주세요.<br />
+                          작가님이 직접 입금을 확인한 후<br />
+                          예약이 최종 확정됩니다.
+                        </div>
+                        <div className="account-info">
+                          <div className="account-text">
+                            <div className="bank-name">{bankName}</div>
+                            <div className="account-number">{accountNumber} ({accountHolder})</div>
+                          </div>
+                          <button
+                            className="copy-button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${bankName} ${accountNumber}`)
+                              alert('계좌번호가 복사되었습니다.')
+                            }}
+                          >
+                            📋
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="timestamp">{msg.timestamp}</div>
+                  </div>
+                </>
+              )
+            }
+          }
+
+          // 일반 텍스트 타입 사용자 메시지: 오른쪽
+          if (msg.isUser && msg.type === 'text') {
             return (
               <>
                 {showDateSeparator && (
