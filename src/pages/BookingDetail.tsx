@@ -184,6 +184,9 @@ export default function BookingDetail() {
 
           // 메시지 로드 완료 후 읽음 처리
           markMessagesAsRead()
+
+          // 상대방 메시지 이전의 내 메시지를 읽음 처리
+          setTimeout(() => markPreviousMessagesAsRead(), 100)
         } catch (err) {
           console.error('[BookingDetail] failed to load chat messages:', err)
         }
@@ -297,6 +300,11 @@ export default function BookingDetail() {
 
           // 새 메시지 수신 시 읽음 처리
           markMessagesAsRead()
+
+          // 상대방 메시지인 경우 이전 내 메시지를 읽음 처리
+          if (!chatMessage.isUser) {
+            setTimeout(() => markPreviousMessagesAsRead(), 100)
+          }
         }
       )
       .subscribe()
@@ -334,6 +342,34 @@ export default function BookingDetail() {
     const period = hours >= 12 ? '오후' : '오전'
     const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
     return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
+  }
+
+  // 상대방 메시지 이전의 내 메시지를 읽음 처리
+  const markPreviousMessagesAsRead = () => {
+    setMessages((prev) => {
+      // 가장 마지막 상대방 메시지를 찾기
+      let lastOpponentIndex = -1
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (!prev[i].isUser) {
+          lastOpponentIndex = i
+          break
+        }
+      }
+
+      // 상대방 메시지가 없으면 처리 안함
+      if (lastOpponentIndex === -1) return prev
+
+      // 그 이전의 내 메시지들을 읽음 처리
+      const updated = [...prev]
+      for (let i = lastOpponentIndex - 1; i >= 0; i--) {
+        if (updated[i].isUser) {
+          // 이미 읽음 상태면 중단 (최적화)
+          if (updated[i].isRead) break
+          updated[i] = { ...updated[i], isRead: true }
+        }
+      }
+      return updated
+    })
   }
 
   // 메시지 읽음 처리
