@@ -375,7 +375,8 @@ export default function BookingDetail() {
                 <div className="timestamp">{msg.timestamp}</div>
                 <div className="booking-card">
                   <h3 className="card-title">
-                    <span className="icon">📋</span> 예약 접수
+                    <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
+                    예약 접수
                   </h3>
                   <div className="card-content">
                     <div className="info-row">
@@ -422,7 +423,8 @@ export default function BookingDetail() {
               <div key={msg.id} className="message-group left">
                 <div className="ai-card">
                   <h3 className="card-title">
-                    <span className="icon">🤖</span> HOXY AI
+                    <img src="/images/hoxy.png" alt="HOXY" className="card-icon" />
+                    HOXY AI
                   </h3>
                   <div className="card-content">
                     <p>{msg.text}</p>
