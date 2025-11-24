@@ -26,6 +26,7 @@ interface ChatMessage {
   type?: string
   content?: any
   isRead?: boolean
+  imageUrls?: string[]
 }
 
 export default function BookingDetail() {
@@ -134,6 +135,16 @@ export default function BookingDetail() {
               }
             }
 
+            // 이미지 URL 파싱
+            let imageUrls: string[] = []
+            if (m.media_url) {
+              try {
+                imageUrls = Array.isArray(m.media_url) ? m.media_url : JSON.parse(m.media_url)
+              } catch {
+                imageUrls = []
+              }
+            }
+
             return {
               id: String(m.id),
               text: text || '',
@@ -142,6 +153,7 @@ export default function BookingDetail() {
               type: m.type,
               content: parsedContent,
               isRead: m.isRead || false,
+              imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
             }
           })
           console.log('[BookingDetail] mapped messages:', mapped)
@@ -213,6 +225,16 @@ export default function BookingDetail() {
             }
           }
 
+          // 이미지 URL 파싱 (실시간)
+          let imageUrls: string[] = []
+          if (newMsg.media_url) {
+            try {
+              imageUrls = Array.isArray(newMsg.media_url) ? newMsg.media_url : JSON.parse(newMsg.media_url)
+            } catch {
+              imageUrls = []
+            }
+          }
+
           const chatMessage: ChatMessage = {
             id: String(newMsg.id),
             text: text || '',
@@ -221,6 +243,7 @@ export default function BookingDetail() {
             type: newMsg.type,
             content: parsedContent,
             isRead: newMsg.isRead || false,
+            imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
           }
 
           // 중복 방지: 이미 존재하는 메시지는 추가하지 않음
@@ -484,6 +507,87 @@ export default function BookingDetail() {
         <div className="date-separator">{formatDateSeparator()}</div>
 
         {messages.map((msg) => {
+          // 이미지 메시지: imageUrls가 있으면 이미지로 표시
+          if (msg.imageUrls && msg.imageUrls.length > 0) {
+            const renderImageLayout = () => {
+              const count = msg.imageUrls!.length
+              const rows: JSX.Element[] = []
+
+              if (count === 1) {
+                // 1개: 200x200
+                rows.push(
+                  <div key="row-0" className="image-row">
+                    <div className="image-item image-single">
+                      <img src={msg.imageUrls![0]} alt="이미지" />
+                    </div>
+                  </div>
+                )
+              } else {
+                // 2개 이상: 2개씩 묶기
+                let index = 0
+                let rowIndex = 0
+
+                while (index < count) {
+                  const remainingCount = count - index
+                  const currentRow: JSX.Element[] = []
+
+                  if (remainingCount === 1) {
+                    // 마지막 1개: 282x140 (가로로 길게)
+                    currentRow.push(
+                      <div key={`img-${index}`} className="image-item image-wide">
+                        <img src={msg.imageUrls![index]} alt="이미지" />
+                      </div>
+                    )
+                    index++
+                  } else {
+                    // 2개: 140x140 두 개
+                    for (let i = 0; i < 2; i++) {
+                      currentRow.push(
+                        <div key={`img-${index}`} className="image-item image-double">
+                          <img src={msg.imageUrls![index]} alt="이미지" />
+                        </div>
+                      )
+                      index++
+                      if (index >= count) break
+                    }
+                  }
+
+                  rows.push(
+                    <div key={`row-${rowIndex}`} className="image-row">
+                      {currentRow}
+                    </div>
+                  )
+                  rowIndex++
+                }
+              }
+
+              return rows
+            }
+
+            return (
+              <div key={msg.id} className={`message-group ${msg.isUser ? 'right' : 'left'}`}>
+                {msg.isUser ? (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                      <div className="read-status">{msg.isRead ? '읽음' : '안읽음'}</div>
+                      <div className="timestamp">{msg.timestamp}</div>
+                    </div>
+                    <div className="image-message-container">
+                      {renderImageLayout()}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="image-message-container">
+                      {renderImageLayout()}
+                    </div>
+                    <div className="timestamp">{msg.timestamp}</div>
+                  </>
+                )}
+              </div>
+            )
+          }
+
           // reservationInquiry 타입 메시지: 예약 접수 카드만 표시
           if (msg.type === 'reservationInquiry') {
             // content가 없으면 렌더링하지 않음 (오류 방지)

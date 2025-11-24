@@ -82,6 +82,46 @@
   flex-shrink: 0;
 }
 
+.image-message-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 70%;
+}
+
+.image-row {
+  display: flex;
+  gap: 2px;
+}
+
+.image-item {
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.image-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-single {
+  width: 200px;
+  height: 200px;
+}
+
+.image-double {
+  width: 140px;
+  height: 140px;
+}
+
+.image-wide {
+  width: 282px;
+  height: 140px;
+}
+
 .message-group.left .timestamp {
   text-align: left;
 }
