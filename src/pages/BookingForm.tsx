@@ -82,13 +82,7 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
       if (chatId) {
         localStorage.setItem('chatId', chatId)
         console.log('[BookingForm] chatId saved to localStorage:', chatId)
-        
-        // 예약 응답에 포함된 첫 메시지도 저장 (채팅 화면에서 먼저 표시하기 위해)
-        if (response?.message) {
-          localStorage.setItem('initialMessage', JSON.stringify(response.message))
-          console.log('[BookingForm] initial message saved:', response.message)
-        }
-        
+
         // 예약 응답에서 토큰 추출 (token, access_token, reservation_token 등 가능한 필드 확인)
         const token = response?.token || response?.access_token || response?.reservation_token
         if (token) {

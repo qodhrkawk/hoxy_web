@@ -16,6 +16,8 @@ interface ChatMessage {
   text: string
   timestamp: string
   isUser: boolean
+  type?: string
+  content?: any
 }
 
 export default function BookingDetail() {
@@ -50,44 +52,7 @@ export default function BookingDetail() {
     // 예약 생성 시 저장해 둔 chatId로 메시지 조회
     const storedChatId = localStorage.getItem('chatId')
     console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
-    
-    // 예약 응답에 포함된 첫 메시지 먼저 표시
-    const initialMessageStr = localStorage.getItem('initialMessage')
-    if (initialMessageStr) {
-      try {
-        const initialMsg: any = JSON.parse(initialMessageStr)
-        console.log('[BookingDetail] initial message from reservation response:', initialMsg)
-        
-        const created = initialMsg.created_at ? new Date(initialMsg.created_at) : new Date()
-        const time = `${created.getHours().toString().padStart(2, '0')}:${created.getMinutes().toString().padStart(2, '0')}`
-        
-        // confirmReservation 타입 메시지는 content를 파싱해서 표시
-        let displayText = ''
-        if (initialMsg.type === 'confirmReservation' && initialMsg.content) {
-          try {
-            const content = JSON.parse(initialMsg.content)
-            displayText = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
-          } catch {
-            displayText = initialMsg.content
-          }
-        } else {
-          displayText = initialMsg.text || initialMsg.content || '예약이 접수되었습니다.'
-        }
-        
-        const initialChatMessage: ChatMessage = {
-          id: String(initialMsg.id),
-          text: displayText,
-          timestamp: time,
-          isUser: initialMsg.sender === 'customer',
-        }
-        setMessages([initialChatMessage])
-        // 표시 후 localStorage에서 제거 (중복 방지)
-        localStorage.removeItem('initialMessage')
-      } catch (err) {
-        console.error('[BookingDetail] failed to parse initial message:', err)
-      }
-    }
-    
+
     if (storedChatId) {
       ;(async () => {
         try {
@@ -117,17 +82,36 @@ export default function BookingDetail() {
           const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, undefined)
           console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
-          const mapped: ChatMessage[] = apiMessages.map((m) => {
+
+          // timestamp 기준으로 정렬 (오래된 것부터)
+          const sortedMessages = apiMessages.sort((a, b) => {
+            const timeA = new Date(a.created_at).getTime()
+            const timeB = new Date(b.created_at).getTime()
+            return timeA - timeB
+          })
+
+          const mapped: ChatMessage[] = sortedMessages.map((m) => {
             const created = m.created_at ? new Date(m.created_at) : new Date()
             const hours = created.getHours()
             const minutes = created.getMinutes()
             const period = hours >= 12 ? '오후' : '오전'
             const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
             const time = `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
-            
+
             // 메시지 텍스트 추출
             let text = m.text ?? ''
-            if (!text && m.content) {
+            let parsedContent = null
+
+            // reservationInquiry 타입은 content를 파싱해서 저장
+            if (m.type === 'reservationInquiry' && m.content) {
+              try {
+                parsedContent = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
+              } catch {
+                parsedContent = null
+              }
+            }
+
+            if (!text && m.content && m.type !== 'reservationInquiry') {
               try {
                 const content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
                 if (m.type === 'confirmReservation') {
@@ -139,21 +123,18 @@ export default function BookingDetail() {
                 text = String(m.content)
               }
             }
-            
+
             return {
               id: String(m.id),
-              text: text || '메시지 없음',
+              text: text || '',
               timestamp: time,
               isUser: m.sender === 'customer',
+              type: m.type,
+              content: parsedContent,
             }
           })
           console.log('[BookingDetail] mapped messages:', mapped)
-          // 초기 메시지가 있으면 그 뒤에 추가, 없으면 전체 교체
-          setMessages((prev) => {
-            const existingIds = new Set(prev.map((m) => m.id))
-            const newMessages = mapped.filter((m) => !existingIds.has(m.id))
-            return [...prev, ...newMessages]
-          })
+          setMessages(mapped)
         } catch (err) {
           console.error('[BookingDetail] failed to load chat messages:', err)
         }
@@ -285,40 +266,53 @@ export default function BookingDetail() {
 
         <div className="date-separator">{formatDateSeparator()}</div>
 
-        <div className="message-group right">
-          <div className="timestamp">오후 8:35</div>
-          <div className="booking-card">
-            <h3 className="card-title">
-              <span className="icon">📋</span> 예약 접수
-            </h3>
-            <div className="card-content">
-              <div className="info-row">
-                <span className="label">희망 스냅 상품</span>
-                <span className="value">{bookingData?.product || '제주 야외 스냅'}</span>
-              </div>
-              <div className="info-row">
-                <span className="label">희망 촬영 날짜</span>
-                <div className="value dates">
-                  <div>1순위  {formatDate(bookingData?.date1 ?? null)}</div>
-                  <div>2순위  {formatDate(bookingData?.date2 ?? null)}</div>
-                  {bookingData?.date3 && <div>3순위  {formatDate(bookingData?.date3)}</div>}
+        {messages.map((msg) => {
+          // reservationInquiry 타입 메시지: 예약 접수 카드
+          if (msg.type === 'reservationInquiry' && msg.content) {
+            const content = msg.content
+            const dateCandidates = content.dateCandidates || []
+
+            // 날짜 포맷 함수 (YYYY-MM-DD -> YYYY. M. D(요일))
+            const formatDateFromString = (dateStr: string) => {
+              const d = new Date(dateStr)
+              const days = ['일', '월', '화', '수', '목', '금', '토']
+              return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}(${days[d.getDay()]})`
+            }
+
+            return (
+              <div key={msg.id} className="message-group right">
+                <div className="timestamp">{msg.timestamp}</div>
+                <div className="booking-card">
+                  <h3 className="card-title">
+                    <span className="icon">📋</span> 예약 접수
+                  </h3>
+                  <div className="card-content">
+                    <div className="info-row">
+                      <span className="label">희망 스냅 상품</span>
+                      <span className="value">{content.productName || '상품'}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">희망 촬영 날짜</span>
+                      <div className="value dates">
+                        {dateCandidates[0] && <div>1순위  {formatDateFromString(dateCandidates[0])}</div>}
+                        {dateCandidates[1] && <div>2순위  {formatDateFromString(dateCandidates[1])}</div>}
+                        {dateCandidates[2] && <div>3순위  {formatDateFromString(dateCandidates[2])}</div>}
+                      </div>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">이름</span>
+                      <span className="value">{bookingData?.name || '-'}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">휴대폰 번호</span>
+                      <span className="value">{bookingData?.phone || '-'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="info-row">
-                <span className="label">이름</span>
-                <span className="value">{bookingData?.name || '정다비'}</span>
-              </div>
-              <div className="info-row">
-                <span className="label">휴대폰 번호</span>
-                <span className="value">{bookingData?.phone || '010-9483-4031'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {messages.map((msg) => {
-          if (msg.isUser) {
-            // 사용자 메시지: 오른쪽
+            )
+          } else if (msg.isUser) {
+            // 일반 사용자 메시지: 오른쪽
             return (
               <div key={msg.id} className="message-group right">
                 <div className="timestamp">{msg.timestamp}</div>
@@ -328,7 +322,7 @@ export default function BookingDetail() {
               </div>
             )
           } else {
-            // 상대방 메시지 (작가/AI): 왼쪽
+            // system 메시지 (AI): 왼쪽
             return (
               <div key={msg.id} className="message-group left">
                 <div className="ai-card">
