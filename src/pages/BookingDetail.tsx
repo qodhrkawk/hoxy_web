@@ -91,11 +91,25 @@ export default function BookingDetail() {
     if (storedChatId) {
       ;(async () => {
         try {
-          // 예약 링크 토큰을 Authorization 헤더에 포함
-          const reservationToken = localStorage.getItem('reservationToken')
+          // 예약 링크 토큰 또는 예약 생성 응답의 토큰을 Authorization 헤더에 포함
+          let reservationToken = localStorage.getItem('reservationToken')
+          
+          // 토큰이 없으면 핸드폰 번호로 토큰 생성 시도 (서버가 핸드폰 번호 기반 인증을 기대하는 경우)
+          if (!reservationToken && bookingData?.phone) {
+            const phoneWithoutHyphens = bookingData.phone.replace(/-/g, '')
+            console.log('[BookingDetail] no token found, using phone number for auth:', phoneWithoutHyphens)
+            // 서버가 핸드폰 번호를 토큰으로 사용하는 경우를 대비
+            reservationToken = phoneWithoutHyphens
+          }
+          
           const headers = reservationToken ? { Authorization: `Bearer ${reservationToken}` } : undefined
-          console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with token:', reservationToken ? 'present' : 'missing')
-          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, undefined, headers)
+          
+          // GET 요청에 phone number를 쿼리 파라미터로 추가
+          const phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
+          const params = phoneWithoutHyphens ? { phone: phoneWithoutHyphens } : undefined
+          
+          console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with token:', reservationToken ? 'present' : 'missing', reservationToken ? `(${reservationToken.substring(0, 10)}...)` : '', 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
+          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, headers)
           console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
           const mapped: ChatMessage[] = apiMessages.map((m) => {
@@ -252,7 +266,7 @@ export default function BookingDetail() {
         <div className="date-separator">{formatDateSeparator()}</div>
 
         <div className="message-group right">
-          <div className="timestamp">안읽음<br />오후 8:35</div>
+          <div className="timestamp">오후 8:35</div>
           <div className="booking-card">
             <h3 className="card-title">
               <span className="icon">📋</span> 예약 접수
@@ -287,7 +301,7 @@ export default function BookingDetail() {
             // 사용자 메시지: 오른쪽
             return (
               <div key={msg.id} className="message-group right">
-                <div className="timestamp">읽음<br />{msg.timestamp}</div>
+                <div className="timestamp">{msg.timestamp}</div>
                 <div className="user-message">
                   <p>{msg.text}</p>
                 </div>

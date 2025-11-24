@@ -88,6 +88,15 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
           localStorage.setItem('initialMessage', JSON.stringify(response.message))
           console.log('[BookingForm] initial message saved:', response.message)
         }
+        
+        // 예약 응답에서 토큰 추출 (token, access_token, reservation_token 등 가능한 필드 확인)
+        const token = response?.token || response?.access_token || response?.reservation_token
+        if (token) {
+          localStorage.setItem('reservationToken', token)
+          console.log('[BookingForm] reservation token saved from response:', token ? 'present' : 'missing')
+        } else {
+          console.warn('[BookingForm] no token found in reservation response. Available keys:', Object.keys(response || {}))
+        }
       } else {
         console.error('[BookingForm] chatId not found in response. Response structure:', {
           hasChat: !!response?.chat,
