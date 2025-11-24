@@ -25,7 +25,9 @@ export default function BookingDetail() {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [artistName, setArtistName] = useState<string>('작가님')
+  const [isUploading, setIsUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const data = localStorage.getItem('bookingData')
@@ -172,12 +174,103 @@ export default function BookingDetail() {
     return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
   }
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    // 최대 10개 제한
+    if (files.length > 10) {
+      alert('이미지는 최대 10개까지 선택할 수 있습니다.')
+      return
+    }
+
+    // 각 파일 크기 확인 (10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > maxSize) {
+        alert(`파일 크기는 10MB를 초과할 수 없습니다: ${files[i].name}`)
+        return
+      }
+    }
+
+    setIsUploading(true)
+
+    const storedChatId = localStorage.getItem('chatId')
+    const bookingDataStr = localStorage.getItem('bookingData')
+    let phone = ''
+    if (bookingDataStr) {
+      try {
+        const bookingData = JSON.parse(bookingDataStr)
+        phone = bookingData?.phone?.replace(/-/g, '') || ''
+      } catch (e) {
+        console.error('[BookingDetail] failed to parse bookingData:', e)
+      }
+    }
+
+    if (!storedChatId) {
+      console.error('[BookingDetail] chatId not found')
+      alert('채팅방 정보를 찾을 수 없습니다.')
+      setIsUploading(false)
+      return
+    }
+
+    if (!phone) {
+      console.error('[BookingDetail] phone number not found')
+      alert('전화번호 정보를 찾을 수 없습니다.')
+      setIsUploading(false)
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('sender', 'customer')
+      formData.append('phone', phone)
+
+      // 모든 이미지를 images 필드에 추가
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i])
+      }
+
+      console.log('[BookingDetail] uploading images:', files.length, 'files')
+
+      // multipart/form-data로 전송하므로 Content-Type 헤더를 자동으로 설정되도록 fetch 직접 사용
+      const response = await fetch(`${networkManager.getBaseURL()}/v1/chats/${storedChatId}/messages/image`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('[BookingDetail] image upload response:', JSON.stringify(result, null, 2))
+
+      // 이미지 메시지가 성공적으로 전송되었으므로 메시지 목록 새로고침
+      // 간단하게 페이지 새로고침하거나, 메시지를 다시 fetch할 수 있음
+      // 여기서는 성공 알림만 표시
+      alert('이미지가 전송되었습니다.')
+
+      // 메시지 목록 새로고침
+      window.location.reload()
+    } catch (err) {
+      console.error('[BookingDetail] failed to upload images:', err)
+      alert('이미지 전송에 실패했습니다. 다시 시도해 주세요.')
+    } finally {
+      setIsUploading(false)
+      // file input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   const handleSendMessage = async () => {
     if (!message.trim()) return
-    
+
     const messageText = message.trim()
     setMessage('') // 입력 필드 먼저 비우기
-    
+
     // 로컬에 먼저 표시 (낙관적 업데이트)
     const tempId = String(Date.now())
     const newMessage: ChatMessage = {
@@ -188,10 +281,10 @@ export default function BookingDetail() {
       type: 'text',
     }
     setMessages([...messages, newMessage])
-    
+
     // 서버로 메시지 전송
     const storedChatId = localStorage.getItem('chatId')
-    
+
     // phone number를 localStorage에서 직접 가져오기
     const bookingDataStr = localStorage.getItem('bookingData')
     let phone = ''
@@ -203,34 +296,34 @@ export default function BookingDetail() {
         console.error('[BookingDetail] failed to parse bookingData:', e)
       }
     }
-    
+
     if (!storedChatId) {
       console.error('[BookingDetail] chatId not found')
       return
     }
-    
+
     if (!phone) {
       console.error('[BookingDetail] phone number not found')
       alert('전화번호 정보를 찾을 수 없습니다.')
       return
     }
-    
+
     try {
       const body: any = {
         text: messageText,
         sender: 'customer',
         type: 'text',
       }
-      
+
       // sender가 customer인 경우 phone 필수
       if (phone) {
         body.phone = phone
       }
-      
+
       console.log('[BookingDetail] sending message:', body)
       const response: any = await networkManager.post(`/v1/chats/${storedChatId}/messages`, body, undefined)
       console.log('[BookingDetail] message sent response:', JSON.stringify(response, null, 2))
-      
+
       // 서버 응답으로 메시지 ID 업데이트 (필요시)
       if (response?.id) {
         setMessages((prev) =>
@@ -347,7 +440,19 @@ export default function BookingDetail() {
       </div>
 
       <div className="message-input-container">
-        <button className="add-button">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: 'none' }}
+          onChange={handleImageSelect}
+        />
+        <button
+          className="add-button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+        >
           <img src="/images/plus.png" alt="추가" />
         </button>
         <div className="input-wrapper">
