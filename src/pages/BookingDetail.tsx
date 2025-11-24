@@ -109,6 +109,8 @@ export default function BookingDetail() {
           const params = phoneWithoutHyphens ? { phone: phoneWithoutHyphens } : undefined
           
           console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with token:', reservationToken ? 'present' : 'missing', reservationToken ? `(${reservationToken.substring(0, 10)}...)` : '', 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
+          console.log('[BookingDetail] GET request headers:', JSON.stringify(headers, null, 2))
+          console.log('[BookingDetail] GET request params:', JSON.stringify(params, null, 2))
           const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, headers)
           console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
@@ -232,6 +234,7 @@ export default function BookingDetail() {
       }
       
       console.log('[BookingDetail] sending message:', body)
+      console.log('[BookingDetail] POST request headers:', JSON.stringify(headers, null, 2))
       const response: any = await networkManager.post(`/v1/chats/${storedChatId}/messages`, body, headers)
       console.log('[BookingDetail] message sent response:', JSON.stringify(response, null, 2))
       
