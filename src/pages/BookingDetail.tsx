@@ -144,6 +144,9 @@ export default function BookingDetail() {
           })
           console.log('[BookingDetail] mapped messages:', mapped)
           setMessages(mapped)
+
+          // 메시지 로드 완료 후 읽음 처리
+          markMessagesAsRead()
         } catch (err) {
           console.error('[BookingDetail] failed to load chat messages:', err)
         }
@@ -223,6 +226,9 @@ export default function BookingDetail() {
             if (exists) return prev
             return [...prev, chatMessage]
           })
+
+          // 새 메시지 수신 시 읽음 처리
+          markMessagesAsRead()
         }
       )
       .subscribe()
@@ -260,6 +266,37 @@ export default function BookingDetail() {
     const period = hours >= 12 ? '오후' : '오전'
     const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
     return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
+  }
+
+  // 메시지 읽음 처리
+  const markMessagesAsRead = async () => {
+    const storedChatId = localStorage.getItem('chatId')
+    const bookingDataStr = localStorage.getItem('bookingData')
+
+    if (!storedChatId) return
+
+    let phone = ''
+    if (bookingDataStr) {
+      try {
+        const bookingData = JSON.parse(bookingDataStr)
+        phone = bookingData?.phone?.replace(/-/g, '') || ''
+      } catch (e) {
+        console.error('[BookingDetail] failed to parse bookingData for read:', e)
+        return
+      }
+    }
+
+    if (!phone) {
+      console.error('[BookingDetail] phone number not found for read')
+      return
+    }
+
+    try {
+      await networkManager.post(`/v1/chats/${storedChatId}/read`, { phone }, undefined)
+      console.log('[BookingDetail] marked messages as read')
+    } catch (err) {
+      console.error('[BookingDetail] failed to mark messages as read:', err)
+    }
   }
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
