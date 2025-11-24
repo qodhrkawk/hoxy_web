@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import { networkManager } from '../utils/NetworkManager'
 import './BookingDetail.css'
+
+// Supabase 클라이언트 초기화
+const supabase = createClient(
+  'https://yhqtlluugbhmuqpwfmtg.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocXRsbHV1Z2JobXVxcHdmbXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxNjc4NTYsImV4cCI6MjA3MDc0Mzg1Nn0.q0x91m_KX5GTvDyONnJd18i0bvE1x8Qy4TqQHA6G9M8'
+)
 
 interface BookingData {
   name: string
@@ -143,6 +150,87 @@ export default function BookingDetail() {
       })()
     } else {
       console.warn('[BookingDetail] chatId not found in localStorage')
+    }
+  }, [])
+
+  // Supabase 실시간 구독
+  useEffect(() => {
+    const storedChatId = localStorage.getItem('chatId')
+    if (!storedChatId) return
+
+    console.log('[BookingDetail] setting up realtime subscription for chatId:', storedChatId)
+
+    // messages 테이블의 INSERT 이벤트 구독
+    const channel = supabase
+      .channel('messages-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `chat_id=eq.${storedChatId}`,
+        },
+        (payload) => {
+          console.log('[BookingDetail] realtime message received:', payload)
+          const newMsg = payload.new as any
+
+          // 메시지 포맷 변환
+          const created = newMsg.created_at ? new Date(newMsg.created_at) : new Date()
+          const hours = created.getHours()
+          const minutes = created.getMinutes()
+          const period = hours >= 12 ? '오후' : '오전'
+          const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+          const time = `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
+
+          let text = newMsg.text ?? ''
+          let parsedContent = null
+
+          // reservationInquiry 타입은 content를 파싱
+          if (newMsg.type === 'reservationInquiry' && newMsg.content) {
+            try {
+              parsedContent = typeof newMsg.content === 'string' ? JSON.parse(newMsg.content) : newMsg.content
+            } catch {
+              parsedContent = null
+            }
+          }
+
+          if (!text && newMsg.content && newMsg.type !== 'reservationInquiry') {
+            try {
+              const content = typeof newMsg.content === 'string' ? JSON.parse(newMsg.content) : newMsg.content
+              if (newMsg.type === 'confirmReservation') {
+                text = `예약 확인: ${content.productName || '상품'} - ${content.confirmedDate || '날짜'}`
+              } else {
+                text = typeof content === 'string' ? content : JSON.stringify(content)
+              }
+            } catch {
+              text = String(newMsg.content)
+            }
+          }
+
+          const chatMessage: ChatMessage = {
+            id: String(newMsg.id),
+            text: text || '',
+            timestamp: time,
+            isUser: newMsg.sender === 'customer',
+            type: newMsg.type,
+            content: parsedContent,
+          }
+
+          // 중복 방지: 이미 존재하는 메시지는 추가하지 않음
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.id === chatMessage.id)
+            if (exists) return prev
+            return [...prev, chatMessage]
+          })
+        }
+      )
+      .subscribe()
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => {
+      console.log('[BookingDetail] unsubscribing from realtime channel')
+      supabase.removeChannel(channel)
     }
   }, [])
 
