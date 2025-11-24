@@ -144,12 +144,6 @@ export default function BookingDetail() {
     }
   }, [])
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return '날짜 미정'
-    const d = new Date(date)
-    const days = ['일', '월', '화', '수', '목', '금', '토']
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}(${days[d.getDay()]})`
-  }
 
   const formatDateSeparator = () => {
     const today = new Date()
