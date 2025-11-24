@@ -817,8 +817,8 @@ export default function BookingDetail() {
             )
           }
 
-          // 일반 텍스트 타입 사용자 메시지: 오른쪽
-          if (msg.isUser && msg.type === 'text') {
+          // 일반 텍스트 타입 사용자 메시지: 오른쪽 (confirmReservation 포함)
+          if (msg.isUser && (msg.type === 'text' || msg.type === 'confirmReservation')) {
             return (
               <>
                 {showDateSeparator && (
@@ -860,7 +860,7 @@ export default function BookingDetail() {
             )
           }
 
-          // author 메시지: 왼쪽 일반 버블 (타이틀/이미지 없음)
+          // author 메시지: 왼쪽 일반 버블 (타이틀/이미지 없음, confirmReservation 포함)
           if (!msg.isUser) {
             return (
               <>
