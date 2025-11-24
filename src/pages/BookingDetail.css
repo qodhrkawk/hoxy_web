@@ -100,7 +100,17 @@
   display: inline-block;
 }
 
-.user-message p {
+.author-message {
+  background: transparent;
+  border-radius: 20px;
+  padding: 10px 15px;
+  border: 1px solid #E7E7E7;
+  max-width: 70%;
+  display: inline-block;
+}
+
+.user-message p,
+.author-message p {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.6;

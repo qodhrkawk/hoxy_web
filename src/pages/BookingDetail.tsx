@@ -527,7 +527,7 @@ export default function BookingDetail() {
           if (!msg.isUser) {
             return (
               <div key={msg.id} className="message-group left">
-                <div className="user-message">
+                <div className="author-message">
                   <p>{msg.text}</p>
                 </div>
                 <div className="timestamp">{msg.timestamp}</div>
