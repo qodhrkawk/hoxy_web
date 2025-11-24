@@ -178,16 +178,61 @@ export default function BookingDetail() {
     return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
   }
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage: ChatMessage = {
-        id: String(Date.now()),
-        text: message,
-        timestamp: getCurrentTime(),
-        isUser: true,
+  const handleSendMessage = async () => {
+    if (!message.trim()) return
+    
+    const messageText = message.trim()
+    setMessage('') // 입력 필드 먼저 비우기
+    
+    // 로컬에 먼저 표시 (낙관적 업데이트)
+    const tempId = String(Date.now())
+    const newMessage: ChatMessage = {
+      id: tempId,
+      text: messageText,
+      timestamp: getCurrentTime(),
+      isUser: true,
+    }
+    setMessages([...messages, newMessage])
+    
+    // 서버로 메시지 전송
+    const storedChatId = localStorage.getItem('chatId')
+    const reservationToken = localStorage.getItem('reservationToken')
+    const phone = bookingData?.phone?.replace(/-/g, '') || '' // 하이픈 제거
+    
+    if (!storedChatId) {
+      console.error('[BookingDetail] chatId not found')
+      return
+    }
+    
+    try {
+      const headers = reservationToken ? { Authorization: `Bearer ${reservationToken}` } : undefined
+      const body: any = {
+        text: messageText,
+        sender: 'customer',
+        type: 'text',
       }
-      setMessages([...messages, newMessage])
-      setMessage('')
+      
+      // sender가 customer인 경우 phone 필수
+      if (phone) {
+        body.phone = phone
+      }
+      
+      console.log('[BookingDetail] sending message:', body)
+      const response: any = await networkManager.post(`/v1/chats/${storedChatId}/messages`, body, headers)
+      console.log('[BookingDetail] message sent response:', JSON.stringify(response, null, 2))
+      
+      // 서버 응답으로 메시지 ID 업데이트 (필요시)
+      if (response?.id) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, id: String(response.id) } : m))
+        )
+      }
+    } catch (err) {
+      console.error('[BookingDetail] failed to send message:', err)
+      // 실패 시 로컬 메시지 제거 또는 에러 표시
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
+      alert('메시지 전송에 실패했습니다. 다시 시도해 주세요.')
+      setMessage(messageText) // 입력 필드에 다시 넣기
     }
   }
 
