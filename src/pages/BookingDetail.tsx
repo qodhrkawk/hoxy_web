@@ -35,6 +35,9 @@ export default function BookingDetail() {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [artistName, setArtistName] = useState<string>('작가님')
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
+  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -470,6 +473,44 @@ export default function BookingDetail() {
     }
   }
 
+  // 이미지 클릭 시 모달 열기
+  const handleImageClick = (images: string[], index: number) => {
+    setSelectedImages(images)
+    setSelectedImageIndex(index)
+    setIsImageModalOpen(true)
+  }
+
+  // 모달 닫기
+  const closeImageModal = () => {
+    setIsImageModalOpen(false)
+  }
+
+  // 이전 이미지
+  const showPreviousImage = () => {
+    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : selectedImages.length - 1))
+  }
+
+  // 다음 이미지
+  const showNextImage = () => {
+    setSelectedImageIndex((prev) => (prev < selectedImages.length - 1 ? prev + 1 : 0))
+  }
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isImageModalOpen) return
+      if (e.key === 'Escape') {
+        closeImageModal()
+      } else if (e.key === 'ArrowLeft') {
+        showPreviousImage()
+      } else if (e.key === 'ArrowRight') {
+        showNextImage()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isImageModalOpen, selectedImages.length])
+
   const handleSendMessage = async () => {
     if (!message.trim()) return
 
@@ -571,7 +612,7 @@ export default function BookingDetail() {
                 // 1개: 200x200
                 rows.push(
                   <div key="row-0" className="image-row">
-                    <div className="image-item image-single">
+                    <div className="image-item image-single" onClick={() => handleImageClick(msg.imageUrls!, 0)}>
                       <img src={msg.imageUrls![0]} alt="이미지" />
                     </div>
                   </div>
@@ -587,8 +628,9 @@ export default function BookingDetail() {
 
                   if (remainingCount === 1) {
                     // 마지막 1개: 282x140 (가로로 길게)
+                    const currentIndex = index
                     currentRow.push(
-                      <div key={`img-${index}`} className="image-item image-wide">
+                      <div key={`img-${index}`} className="image-item image-wide" onClick={() => handleImageClick(msg.imageUrls!, currentIndex)}>
                         <img src={msg.imageUrls![index]} alt="이미지" />
                       </div>
                     )
@@ -596,8 +638,9 @@ export default function BookingDetail() {
                   } else {
                     // 2개: 140x140 두 개
                     for (let i = 0; i < 2; i++) {
+                      const currentIndex = index
                       currentRow.push(
-                        <div key={`img-${index}`} className="image-item image-double">
+                        <div key={`img-${index}`} className="image-item image-double" onClick={() => handleImageClick(msg.imageUrls!, currentIndex)}>
                           <img src={msg.imageUrls![index]} alt="이미지" />
                         </div>
                       )
@@ -786,6 +829,40 @@ export default function BookingDetail() {
           </button>
         </div>
       </div>
+
+      {/* 이미지 상세보기 모달 */}
+      {isImageModalOpen && (
+        <div className="image-modal-overlay" onClick={closeImageModal}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-button" onClick={closeImageModal}>
+              ✕
+            </button>
+
+            {selectedImages.length > 1 && (
+              <>
+                <button className="modal-nav-button modal-prev-button" onClick={showPreviousImage}>
+                  ‹
+                </button>
+                <button className="modal-nav-button modal-next-button" onClick={showNextImage}>
+                  ›
+                </button>
+              </>
+            )}
+
+            <img
+              src={selectedImages[selectedImageIndex]}
+              alt="확대 이미지"
+              className="modal-image"
+            />
+
+            {selectedImages.length > 1 && (
+              <div className="modal-image-counter">
+                {selectedImageIndex + 1} / {selectedImages.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
