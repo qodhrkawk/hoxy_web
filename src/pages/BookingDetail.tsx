@@ -91,12 +91,28 @@ export default function BookingDetail() {
     if (storedChatId) {
       ;(async () => {
         try {
-          // phone number를 Authorization 헤더에 사용
-          const phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
-          const headers = phoneWithoutHyphens ? { Authorization: `Bearer ${phoneWithoutHyphens}` } : undefined
+          // phone number를 localStorage에서 직접 가져와서 Authorization 헤더에 사용
+          const bookingDataStr = localStorage.getItem('bookingData')
+          let phoneWithoutHyphens = ''
+          if (bookingDataStr) {
+            try {
+              const bookingData = JSON.parse(bookingDataStr)
+              phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
+            } catch (e) {
+              console.error('[BookingDetail] failed to parse bookingData:', e)
+            }
+          }
+          
+          // phone number가 없으면 에러
+          if (!phoneWithoutHyphens) {
+            console.error('[BookingDetail] phone number not found in bookingData')
+            return
+          }
+          
+          const headers = { Authorization: `Bearer ${phoneWithoutHyphens}` }
           
           // GET 요청에 phone number를 쿼리 파라미터로 추가
-          const params = phoneWithoutHyphens ? { phone: phoneWithoutHyphens } : undefined
+          const params = { phone: phoneWithoutHyphens }
           
           console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
           console.log('[BookingDetail] GET request headers:', JSON.stringify(headers, null, 2))
@@ -202,16 +218,33 @@ export default function BookingDetail() {
     
     // 서버로 메시지 전송
     const storedChatId = localStorage.getItem('chatId')
-    const phone = bookingData?.phone?.replace(/-/g, '') || '' // 하이픈 제거
+    
+    // phone number를 localStorage에서 직접 가져오기
+    const bookingDataStr = localStorage.getItem('bookingData')
+    let phone = ''
+    if (bookingDataStr) {
+      try {
+        const bookingData = JSON.parse(bookingDataStr)
+        phone = bookingData?.phone?.replace(/-/g, '') || ''
+      } catch (e) {
+        console.error('[BookingDetail] failed to parse bookingData:', e)
+      }
+    }
     
     if (!storedChatId) {
       console.error('[BookingDetail] chatId not found')
       return
     }
     
+    if (!phone) {
+      console.error('[BookingDetail] phone number not found')
+      alert('전화번호 정보를 찾을 수 없습니다.')
+      return
+    }
+    
     try {
       // phone number를 Authorization 헤더에 사용
-      const headers = phone ? { Authorization: `Bearer ${phone}` } : undefined
+      const headers = { Authorization: `Bearer ${phone}` }
       const body: any = {
         text: messageText,
         sender: 'customer',
