@@ -859,20 +859,20 @@ export default function BookingDetail() {
                           작가님이 직접 입금을 확인한 후<br />
                           예약이 최종 확정됩니다.
                         </div>
-                        <div className="account-info">
+                        <div
+                          className="account-info"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${bankName} ${accountNumber}`)
+                            alert('계좌번호가 복사되었습니다.')
+                          }}
+                        >
                           <div className="account-text">
                             <div className="bank-name">{bankName}</div>
                             <div className="account-number">{accountNumber} ({accountHolder})</div>
                           </div>
-                          <button
-                            className="copy-button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(`${bankName} ${accountNumber}`)
-                              alert('계좌번호가 복사되었습니다.')
-                            }}
-                          >
+                          <div className="copy-icon">
                             📋
-                          </button>
+                          </div>
                         </div>
                       </div>
                     </div>

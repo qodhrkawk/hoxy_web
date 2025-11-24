@@ -505,6 +505,12 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.account-info:hover {
+  background: #EBEBEB;
 }
 
 .account-text {
@@ -526,19 +532,10 @@
   color: #000;
 }
 
-.copy-button {
-  background: transparent;
-  border: none;
+.copy-icon {
   font-size: 24px;
-  cursor: pointer;
-  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.copy-button:hover {
-  opacity: 1;
 }
