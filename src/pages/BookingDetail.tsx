@@ -109,15 +109,12 @@ export default function BookingDetail() {
             return
           }
           
-          const headers = { Authorization: `Bearer ${phoneWithoutHyphens}` }
-          
-          // GET 요청에 phone number를 쿼리 파라미터로 추가
+          // GET 요청에 phone number를 쿼리 파라미터로 추가 (서버가 phone으로 인증)
           const params = { phone: phoneWithoutHyphens }
           
           console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
-          console.log('[BookingDetail] GET request headers:', JSON.stringify(headers, null, 2))
           console.log('[BookingDetail] GET request params:', JSON.stringify(params, null, 2))
-          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, headers)
+          const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, undefined)
           console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
           const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
           const mapped: ChatMessage[] = apiMessages.map((m) => {
@@ -243,8 +240,6 @@ export default function BookingDetail() {
     }
     
     try {
-      // phone number를 Authorization 헤더에 사용
-      const headers = { Authorization: `Bearer ${phone}` }
       const body: any = {
         text: messageText,
         sender: 'customer',
@@ -257,8 +252,7 @@ export default function BookingDetail() {
       }
       
       console.log('[BookingDetail] sending message:', body)
-      console.log('[BookingDetail] POST request headers:', JSON.stringify(headers, null, 2))
-      const response: any = await networkManager.post(`/v1/chats/${storedChatId}/messages`, body, headers)
+      const response: any = await networkManager.post(`/v1/chats/${storedChatId}/messages`, body, undefined)
       console.log('[BookingDetail] message sent response:', JSON.stringify(response, null, 2))
       
       // 서버 응답으로 메시지 ID 업데이트 (필요시)
