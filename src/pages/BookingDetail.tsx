@@ -292,7 +292,8 @@ export default function BookingDetail() {
     }
 
     try {
-      await networkManager.post(`/v1/chats/${storedChatId}/read`, { phone }, undefined)
+      // query parameter와 body 둘 다 phone 전달
+      await networkManager.post(`/v1/chats/${storedChatId}/read?phone=${phone}`, { phone }, undefined)
       console.log('[BookingDetail] marked messages as read')
     } catch (err) {
       console.error('[BookingDetail] failed to mark messages as read:', err)
