@@ -27,6 +27,7 @@ interface ChatMessage {
   content?: any
   isRead?: boolean
   imageUrls?: string[]
+  isUploading?: boolean
 }
 
 export default function BookingDetail() {
@@ -34,7 +35,6 @@ export default function BookingDetail() {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [artistName, setArtistName] = useState<string>('작가님')
-  const [isUploading, setIsUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -344,8 +344,6 @@ export default function BookingDetail() {
       }
     }
 
-    setIsUploading(true)
-
     const storedChatId = localStorage.getItem('chatId')
     const bookingDataStr = localStorage.getItem('bookingData')
     let phone = ''
@@ -361,18 +359,47 @@ export default function BookingDetail() {
     if (!storedChatId) {
       console.error('[BookingDetail] chatId not found')
       alert('채팅방 정보를 찾을 수 없습니다.')
-      setIsUploading(false)
       return
     }
 
     if (!phone) {
       console.error('[BookingDetail] phone number not found')
       alert('전화번호 정보를 찾을 수 없습니다.')
-      setIsUploading(false)
       return
     }
 
+    // 로컬 이미지를 Data URL로 읽기
+    const readFilesAsDataURL = async (files: FileList): Promise<string[]> => {
+      const promises = Array.from(files).map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = (e) => resolve(e.target?.result as string)
+          reader.readAsDataURL(file)
+        })
+      })
+      return Promise.all(promises)
+    }
+
+    // tempId를 try 밖에서 선언 (catch 블록에서도 접근 가능하도록)
+    const tempId = `temp-${Date.now()}`
+
     try {
+      // 임시 이미지 URL 생성
+      const tempImageUrls = await readFilesAsDataURL(files)
+
+      // 낙관적 업데이트: 로컬에 먼저 표시 (업로딩 상태)
+      const tempMessage: ChatMessage = {
+        id: tempId,
+        text: '',
+        timestamp: getCurrentTime(),
+        isUser: true,
+        type: 'image',
+        imageUrls: tempImageUrls,
+        isUploading: true,
+        isRead: false,
+      }
+      setMessages((prev) => [...prev, tempMessage])
+
       const formData = new FormData()
       formData.append('sender', 'customer')
       formData.append('phone', phone)
@@ -384,7 +411,7 @@ export default function BookingDetail() {
 
       console.log('[BookingDetail] uploading images:', files.length, 'files')
 
-      // multipart/form-data로 전송하므로 Content-Type 헤더를 자동으로 설정되도록 fetch 직접 사용
+      // multipart/form-data로 전송
       const response = await fetch(`${networkManager.getBaseURL()}/v1/chats/${storedChatId}/messages/image`, {
         method: 'POST',
         body: formData,
@@ -397,18 +424,15 @@ export default function BookingDetail() {
       const result = await response.json()
       console.log('[BookingDetail] image upload response:', JSON.stringify(result, null, 2))
 
-      // 이미지 메시지가 성공적으로 전송되었으므로 메시지 목록 새로고침
-      // 간단하게 페이지 새로고침하거나, 메시지를 다시 fetch할 수 있음
-      // 여기서는 성공 알림만 표시
-      alert('이미지가 전송되었습니다.')
-
-      // 메시지 목록 새로고침
-      window.location.reload()
+      // 업로드 성공: 임시 메시지 제거 (서버 응답이 realtime으로 올 것)
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
     } catch (err) {
       console.error('[BookingDetail] failed to upload images:', err)
       alert('이미지 전송에 실패했습니다. 다시 시도해 주세요.')
+
+      // 실패 시 임시 메시지 제거
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
     } finally {
-      setIsUploading(false)
       // file input 초기화
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -574,12 +598,22 @@ export default function BookingDetail() {
                     </div>
                     <div className="image-message-container">
                       {renderImageLayout()}
+                      {msg.isUploading && (
+                        <div className="upload-overlay">
+                          <div className="spinner"></div>
+                        </div>
+                      )}
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="image-message-container">
                       {renderImageLayout()}
+                      {msg.isUploading && (
+                        <div className="upload-overlay">
+                          <div className="spinner"></div>
+                        </div>
+                      )}
                     </div>
                     <div className="timestamp">{msg.timestamp}</div>
                   </>
@@ -701,7 +735,6 @@ export default function BookingDetail() {
         <button
           className="add-button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
         >
           <img src="/images/plus.png" alt="추가" />
         </button>
