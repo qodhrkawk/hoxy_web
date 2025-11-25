@@ -275,17 +275,21 @@
   gap: 2px;
   max-width: 70%;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .image-row {
   display: flex;
   gap: 2px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .image-item {
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .image-item img {
@@ -293,6 +297,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .image-single {
