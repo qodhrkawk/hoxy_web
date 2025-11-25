@@ -70,7 +70,7 @@ export default function BookingDetail() {
           }
           if (verifiedData.artistInfo) {
             localStorage.setItem('artistInfo', JSON.stringify(verifiedData.artistInfo))
-            setArtistName(verifiedData.artistInfo.brand_name || verifiedData.artistInfo.name || '작가님')
+            setArtistName(verifiedData.artistInfo.name || verifiedData.artistInfo.brand_name || '작가님')
           }
           if (verifiedData.bookingData) {
             localStorage.setItem('bookingData', JSON.stringify(verifiedData.bookingData))
@@ -118,7 +118,7 @@ export default function BookingDetail() {
               email: linkResponse.author.email,
             }
             localStorage.setItem('artistInfo', JSON.stringify(authorInfo))
-            setArtistName(authorInfo.brand_name || authorInfo.name || '작가님')
+            setArtistName(authorInfo.name || authorInfo.brand_name || '작가님')
             console.log('[BookingDetail] ✓ Saved author info:')
             console.log('  - ID:', authorInfo.id)
             console.log('  - Name:', authorInfo.name)
@@ -173,7 +173,7 @@ export default function BookingDetail() {
     if (artistInfoStr) {
       try {
         const artistInfo = JSON.parse(artistInfoStr)
-        setArtistName(artistInfo.brand_name || artistInfo.name || '작가님')
+        setArtistName(artistInfo.name || artistInfo.brand_name || '작가님')
       } catch {
         // 파싱 실패 시 기본값 유지
       }
