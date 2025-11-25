@@ -23,7 +23,7 @@ interface ReservationProduct {
 }
 
 interface ReservationLinkResponse {
-  artist: ReservationArtist
+  author: ReservationArtist
   products: ReservationProduct[]
   unavailable_dates: string[]
 }
@@ -60,13 +60,15 @@ export default function ReservationLanding() {
             : []
         if (mounted) {
           setProducts(names.map((p) => ({ id: p.id, name: p.name })))
-          setAuthorId(res.artist?.id ?? null)
+          setAuthorId(res.author?.id ?? null)
           // 작가 정보를 localStorage에 저장 (채팅 화면에서 사용)
-          if (res.artist) {
+          if (res.author) {
             try {
               localStorage.setItem('artistInfo', JSON.stringify({
-                name: res.artist.name,
-                brand_name: res.artist.brand_name,
+                id: res.author.id,
+                name: res.author.name,
+                brand_name: res.author.brand_name,
+                email: res.author.email,
               }))
             } catch {}
           }
