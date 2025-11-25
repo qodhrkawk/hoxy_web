@@ -55,6 +55,39 @@ export default function BookingDetail() {
     if (urlChatId) {
       console.log('[BookingDetail] token from URL:', urlChatId)
 
+      // 이미 검증된 토큰인지 확인
+      const verifiedDataStr = localStorage.getItem(`verified_chat_${urlChatId}`)
+      if (verifiedDataStr) {
+        try {
+          const verifiedData = JSON.parse(verifiedDataStr)
+          console.log('[BookingDetail] ✓ Found verified chat data:', verifiedData)
+
+          // chatId와 작가 정보 복원
+          if (verifiedData.chatId) {
+            localStorage.setItem('chatId', verifiedData.chatId)
+          }
+          if (verifiedData.artistInfo) {
+            localStorage.setItem('artistInfo', JSON.stringify(verifiedData.artistInfo))
+            setArtistName(verifiedData.artistInfo.brand_name || verifiedData.artistInfo.name || '작가님')
+          }
+          if (verifiedData.bookingData) {
+            localStorage.setItem('bookingData', JSON.stringify(verifiedData.bookingData))
+            setBookingData(verifiedData.bookingData)
+          }
+
+          // 바로 채팅 로드
+          console.log('[BookingDetail] → Auto-loading chat (already verified)')
+          setShowCustomerInfoForm(false)
+          ;(async () => {
+            await loadChatMessages()
+          })()
+          return
+        } catch (e) {
+          console.error('[BookingDetail] failed to parse verified data:', e)
+          // 파싱 실패 시 계속 진행 (아래 API 호출)
+        }
+      }
+
       ;(async () => {
         try {
           // 토큰으로 링크 정보 조회
@@ -681,6 +714,28 @@ export default function BookingDetail() {
       }
 
       console.log('[BookingDetail] ✓ Verification successful')
+
+      // 검증 성공 시 verified 데이터 저장
+      const verifiedData = {
+        chatId: linkResponseData.chat?.id,
+        artistInfo: {
+          id: linkResponseData.author?.id,
+          name: linkResponseData.author?.name,
+          brand_name: linkResponseData.author?.brand_name,
+          email: linkResponseData.author?.email,
+        },
+        bookingData: {
+          name: customerName,
+          phone: customerPhone,
+          product: '',
+          date1: null,
+          date2: null,
+          date3: null,
+        },
+        verifiedAt: new Date().toISOString(),
+      }
+      localStorage.setItem(`verified_chat_${urlChatId}`, JSON.stringify(verifiedData))
+      console.log('[BookingDetail] ✓ Saved verified chat data for token:', urlChatId)
     }
 
     // localStorage에 저장
