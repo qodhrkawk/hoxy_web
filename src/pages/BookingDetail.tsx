@@ -47,6 +47,8 @@ export default function BookingDetail() {
   const [isPhoneValid, setIsPhoneValid] = useState(true)
   const [linkResponseData, setLinkResponseData] = useState<any>(null)
   const [showErrorModal, setShowErrorModal] = useState(false)
+  const [modalSwipeY, setModalSwipeY] = useState(0)
+  const [modalTouchStart, setModalTouchStart] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -649,6 +651,36 @@ export default function BookingDetail() {
   // 모달 닫기
   const closeImageModal = () => {
     setIsImageModalOpen(false)
+    setModalSwipeY(0)
+    setModalTouchStart(0)
+  }
+
+  // 모달 스와이프 시작
+  const handleModalTouchStart = (e: React.TouchEvent) => {
+    setModalTouchStart(e.touches[0].clientY)
+  }
+
+  // 모달 스와이프 중
+  const handleModalTouchMove = (e: React.TouchEvent) => {
+    if (modalTouchStart === 0) return
+    const currentY = e.touches[0].clientY
+    const diff = currentY - modalTouchStart
+    // 아래로만 스와이프 가능
+    if (diff > 0) {
+      setModalSwipeY(diff)
+    }
+  }
+
+  // 모달 스와이프 끝
+  const handleModalTouchEnd = () => {
+    // 100px 이상 스와이프하면 닫기
+    if (modalSwipeY > 100) {
+      closeImageModal()
+    } else {
+      // 원래 위치로 복귀
+      setModalSwipeY(0)
+    }
+    setModalTouchStart(0)
   }
 
   // 이전 이미지
@@ -1386,8 +1418,22 @@ export default function BookingDetail() {
 
       {/* 이미지 상세보기 모달 */}
       {isImageModalOpen && (
-        <div className="image-modal-overlay" onClick={closeImageModal}>
-          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="image-modal-overlay"
+          onClick={closeImageModal}
+          style={{ opacity: modalSwipeY > 0 ? 1 - modalSwipeY / 300 : 1 }}
+        >
+          <div
+            className="image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleModalTouchStart}
+            onTouchMove={handleModalTouchMove}
+            onTouchEnd={handleModalTouchEnd}
+            style={{
+              transform: `translateY(${modalSwipeY}px)`,
+              transition: modalTouchStart === 0 ? 'transform 0.3s ease-out' : 'none'
+            }}
+          >
             <button className="modal-close-button" onClick={closeImageModal}>
               ✕
             </button>
