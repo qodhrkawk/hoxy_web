@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import { createClient } from '@supabase/supabase-js'
 import { networkManager } from '../utils/NetworkManager'
 import './BookingDetail.css'
@@ -32,6 +33,7 @@ interface ChatMessage {
 }
 
 export default function BookingDetail() {
+  const { chatId: urlChatId } = useParams<{ chatId: string }>()
   const [bookingData, setBookingData] = useState<BookingData | null>(null)
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -46,6 +48,12 @@ export default function BookingDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    // URL에서 chatId가 온 경우 localStorage에 저장
+    if (urlChatId) {
+      console.log('[BookingDetail] chatId from URL:', urlChatId)
+      localStorage.setItem('chatId', urlChatId)
+    }
+
     const data = localStorage.getItem('bookingData')
     let phoneWithoutHyphens = ''
 
@@ -70,7 +78,7 @@ export default function BookingDetail() {
       }
     }
 
-    // 예약 생성 시 저장해 둔 chatId로 메시지 조회
+    // 예약 생성 시 저장해 둔 chatId 또는 URL chatId로 메시지 조회
     const storedChatId = localStorage.getItem('chatId')
     console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
 
@@ -206,7 +214,7 @@ export default function BookingDetail() {
     } else {
       console.warn('[BookingDetail] chatId not found in localStorage')
     }
-  }, [])
+  }, [urlChatId])
 
   // Supabase 실시간 구독
   useEffect(() => {

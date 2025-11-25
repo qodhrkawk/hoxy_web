@@ -12,6 +12,7 @@ function App() {
         <Route path="/reservation/:token" element={<ReservationLanding />} />
         <Route path="/loading" element={<LoadingPage />} />
         <Route path="/detail" element={<BookingDetail />} />
+        <Route path="/chat/:chatId" element={<BookingDetail />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
