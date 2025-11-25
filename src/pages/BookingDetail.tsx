@@ -39,11 +39,16 @@ export default function BookingDetail() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [showCustomerInfoForm, setShowCustomerInfoForm] = useState(false)
+  const [customerName, setCustomerName] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const data = localStorage.getItem('bookingData')
+    let phoneWithoutHyphens = ''
+
     if (data) {
       const parsed = JSON.parse(data)
       // Date 문자열을 Date 객체로 변환
@@ -51,6 +56,7 @@ export default function BookingDetail() {
       if (parsed.date2) parsed.date2 = new Date(parsed.date2)
       if (parsed.date3) parsed.date3 = new Date(parsed.date3)
       setBookingData(parsed)
+      phoneWithoutHyphens = parsed?.phone?.replace(/-/g, '') || ''
     }
 
     // 작가 정보 로드
@@ -67,6 +73,13 @@ export default function BookingDetail() {
     // 예약 생성 시 저장해 둔 chatId로 메시지 조회
     const storedChatId = localStorage.getItem('chatId')
     console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
+
+    // phone number가 없으면 고객 정보 입력 폼 표시
+    if (!phoneWithoutHyphens) {
+      console.log('[BookingDetail] no phone number found, showing customer info form')
+      setShowCustomerInfoForm(true)
+      return
+    }
 
     if (storedChatId) {
       ;(async () => {
@@ -557,6 +570,43 @@ export default function BookingDetail() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isImageModalOpen, selectedImages.length])
 
+  // 고객 정보 확인 처리
+  const handleCustomerInfoSubmit = () => {
+    if (!customerName.trim()) {
+      alert('이름을 입력해 주세요.')
+      return
+    }
+    if (!customerPhone.trim()) {
+      alert('휴대폰 번호를 입력해 주세요.')
+      return
+    }
+
+    // 전화번호 형식 검증 (숫자만)
+    const phoneDigits = customerPhone.replace(/-/g, '')
+    if (!/^\d{10,11}$/.test(phoneDigits)) {
+      alert('올바른 휴대폰 번호를 입력해 주세요.')
+      return
+    }
+
+    // localStorage에 저장
+    const bookingData = {
+      name: customerName,
+      phone: customerPhone,
+      product: '',
+      date1: null,
+      date2: null,
+      date3: null,
+    }
+    localStorage.setItem('bookingData', JSON.stringify(bookingData))
+    setBookingData(bookingData)
+
+    // 폼 숨기기
+    setShowCustomerInfoForm(false)
+
+    // 페이지 새로고침하여 채팅 로드
+    window.location.reload()
+  }
+
   const handleSendMessage = async () => {
     if (!message.trim()) return
 
@@ -633,6 +683,47 @@ export default function BookingDetail() {
       alert('메시지 전송에 실패했습니다. 다시 시도해 주세요.')
       setMessage(messageText) // 입력 필드에 다시 넣기
     }
+  }
+
+  // 고객 정보 입력 폼 표시
+  if (showCustomerInfoForm) {
+    return (
+      <div className="customer-info-container">
+        <div className="customer-info-content">
+          <div className="logo">HOXY</div>
+          <h1 className="info-title">확인을 위해 본인 인증을<br />진행해 주세요</h1>
+          <p className="info-description">예약자 이름과 전화번호를 입력해 주세요.</p>
+
+          <div className="info-form">
+            <div className="form-group">
+              <label className="form-label">예약자명</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="이름을 입력해 주세요"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">휴대폰 번호</label>
+              <input
+                type="tel"
+                className="form-input"
+                placeholder="휴대폰 번호를 입력해 주세요"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <button className="submit-button" onClick={handleCustomerInfoSubmit}>
+            확인
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
