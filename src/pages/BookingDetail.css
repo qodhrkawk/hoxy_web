@@ -120,6 +120,71 @@
   opacity: 1;
 }
 
+/* 에러 모달 */
+.error-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.error-modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 24px 24px 24px;
+  max-width: 320px;
+  width: calc(100% - 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.error-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+  text-align: center;
+}
+
+.error-modal-description {
+  font-size: 15px;
+  font-weight: 400;
+  color: #666;
+  margin: 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.error-modal-button {
+  width: 100%;
+  height: 52px;
+  background: #000;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+
+.error-modal-button:hover {
+  opacity: 0.9;
+}
+
+.error-modal-button:active {
+  opacity: 0.8;
+}
+
 .chat-container {
   min-height: 100vh;
   background: white;

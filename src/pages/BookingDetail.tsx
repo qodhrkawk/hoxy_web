@@ -45,6 +45,8 @@ export default function BookingDetail() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [isPhoneValid, setIsPhoneValid] = useState(true)
+  const [linkResponseData, setLinkResponseData] = useState<any>(null)
+  const [showErrorModal, setShowErrorModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -59,6 +61,9 @@ export default function BookingDetail() {
           const linkResponse: any = await networkManager.get(`/v1/chats/links/${urlChatId}`, {}, undefined)
           console.log('[BookingDetail] ===== Link Response =====')
           console.log('[BookingDetail] Full response:', JSON.stringify(linkResponse, null, 2))
+
+          // response 저장 (나중에 검증에 사용)
+          setLinkResponseData(linkResponse)
 
           // chatId 저장
           const chatId = linkResponse.chat?.id
@@ -89,22 +94,22 @@ export default function BookingDetail() {
             console.warn('[BookingDetail] ✗ No author info in response')
           }
 
-          // 전화번호 정보 로깅 (처리하지는 않음)
+          // 전화번호 정보 로깅
           if (linkResponse.chat?.phone) {
             console.log('[BookingDetail] ✓ Phone number exists in response:', linkResponse.chat.phone)
           } else {
             console.log('[BookingDetail] ✗ No phone number in response')
           }
 
-          // 고객 이름 정보 로깅 (처리하지는 않음)
+          // 고객 이름 정보 로깅
           if (linkResponse.customer_name) {
             console.log('[BookingDetail] ✓ Customer name exists in response:', linkResponse.customer_name)
           } else {
             console.log('[BookingDetail] ✗ No customer name in response')
           }
 
-          // TODO: 테스트용 - 무조건 고객 정보 입력 폼 표시
-          console.log('[BookingDetail] → Showing customer info form (forced for testing)')
+          // 고객 정보 입력 폼 표시
+          console.log('[BookingDetail] → Showing customer info form')
           setShowCustomerInfoForm(true)
         } catch (err) {
           console.error('[BookingDetail] failed to load link info:', err)
@@ -640,7 +645,7 @@ export default function BookingDetail() {
   }, [isImageModalOpen, selectedImages.length])
 
   // 고객 정보 확인 처리
-  const handleCustomerInfoSubmit = () => {
+  const handleCustomerInfoSubmit = async () => {
     if (!customerName.trim()) {
       alert('이름을 입력해 주세요.')
       return
@@ -655,6 +660,27 @@ export default function BookingDetail() {
     if (!/^\d{10,11}$/.test(phoneDigits)) {
       alert('올바른 휴대폰 번호를 입력해 주세요.')
       return
+    }
+
+    // linkResponseData가 있으면 검증 수행
+    if (linkResponseData) {
+      const serverName = linkResponseData.customer_name || ''
+      const serverPhone = linkResponseData.chat?.phone || ''
+
+      console.log('[BookingDetail] Verifying customer info:')
+      console.log('  - Input name:', customerName)
+      console.log('  - Server name:', serverName)
+      console.log('  - Input phone:', phoneDigits)
+      console.log('  - Server phone:', serverPhone)
+
+      // 이름과 전화번호 검증
+      if (customerName !== serverName || phoneDigits !== serverPhone) {
+        console.log('[BookingDetail] ✗ Verification failed')
+        setShowErrorModal(true)
+        return
+      }
+
+      console.log('[BookingDetail] ✓ Verification successful')
     }
 
     // localStorage에 저장
@@ -672,8 +698,136 @@ export default function BookingDetail() {
     // 폼 숨기기
     setShowCustomerInfoForm(false)
 
-    // 페이지 새로고침하여 채팅 로드
-    window.location.reload()
+    // linkResponseData가 있으면 직접 메시지 로드, 없으면 페이지 새로고침
+    if (linkResponseData) {
+      // 메시지 로드 로직 실행
+      await loadChatMessages()
+    } else {
+      // 페이지 새로고침하여 채팅 로드
+      window.location.reload()
+    }
+  }
+
+  // 채팅 메시지 로드 함수
+  const loadChatMessages = async () => {
+    const storedChatId = localStorage.getItem('chatId')
+    if (!storedChatId) {
+      console.error('[BookingDetail] chatId not found')
+      return
+    }
+
+    const bookingDataStr = localStorage.getItem('bookingData')
+    let phoneWithoutHyphens = ''
+    if (bookingDataStr) {
+      try {
+        const bookingData = JSON.parse(bookingDataStr)
+        phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
+      } catch (e) {
+        console.error('[BookingDetail] failed to parse bookingData:', e)
+        return
+      }
+    }
+
+    if (!phoneWithoutHyphens) {
+      console.error('[BookingDetail] phone number not found')
+      return
+    }
+
+    try {
+      const params = { phone: phoneWithoutHyphens }
+      console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
+      console.log('[BookingDetail] GET request params:', JSON.stringify(params, null, 2))
+      const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, undefined)
+      console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
+      const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
+
+      // timestamp 기준으로 정렬 (오래된 것부터)
+      const sortedMessages = apiMessages.sort((a, b) => {
+        const timeA = new Date(a.created_at).getTime()
+        const timeB = new Date(b.created_at).getTime()
+        return timeA - timeB
+      })
+
+      const mapped: ChatMessage[] = sortedMessages.map((m) => {
+        const created = m.created_at ? new Date(m.created_at) : new Date()
+        const hours = created.getHours()
+        const minutes = created.getMinutes()
+        const period = hours >= 12 ? '오후' : '오전'
+        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+        const time = `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
+
+        // 날짜 문자열 (YYYY-MM-DD)
+        const dateString = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`
+
+        // 메시지 텍스트 추출
+        let text = m.text ?? ''
+        let parsedContent = null
+
+        // reservationInquiry, confirmReservation 타입은 content를 파싱해서 저장
+        if ((m.type === 'reservationInquiry' || m.type === 'confirmReservation') && m.content) {
+          try {
+            parsedContent = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
+            if (m.type === 'confirmReservation') {
+              console.log('[BookingDetail] confirmReservation content:', JSON.stringify(parsedContent, null, 2))
+            }
+          } catch {
+            parsedContent = null
+          }
+        }
+
+        if (!text && m.content && m.type !== 'reservationInquiry' && m.type !== 'confirmReservation') {
+          try {
+            const content = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
+            text = typeof content === 'string' ? content : JSON.stringify(content)
+          } catch {
+            text = String(m.content)
+          }
+        }
+
+        // 이미지 URL 파싱
+        let imageUrls: string[] = []
+        if (m.media_url) {
+          console.log('[BookingDetail] parsing media_url:', m.media_url, 'type:', typeof m.media_url)
+          if (Array.isArray(m.media_url)) {
+            imageUrls = m.media_url
+          } else if (typeof m.media_url === 'string') {
+            if (m.media_url.startsWith('[')) {
+              try {
+                imageUrls = JSON.parse(m.media_url)
+              } catch (e) {
+                console.error('[BookingDetail] failed to parse JSON array:', e)
+                imageUrls = []
+              }
+            } else {
+              imageUrls = [m.media_url]
+            }
+          }
+          console.log('[BookingDetail] parsed imageUrls:', imageUrls)
+        }
+
+        return {
+          id: String(m.id),
+          text: text || '',
+          timestamp: time,
+          isUser: m.sender === 'customer',
+          type: m.type,
+          content: parsedContent,
+          isRead: m.isRead || false,
+          imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+          dateString,
+        }
+      })
+      console.log('[BookingDetail] mapped messages:', mapped)
+      setMessages(mapped)
+
+      // 메시지 로드 완료 후 읽음 처리
+      markMessagesAsRead()
+
+      // 상대방 메시지 이전의 내 메시지를 읽음 처리
+      setTimeout(() => markPreviousMessagesAsRead(), 100)
+    } catch (err) {
+      console.error('[BookingDetail] failed to load chat messages:', err)
+    }
   }
 
   const handleSendMessage = async () => {
@@ -808,6 +962,21 @@ export default function BookingDetail() {
             확인
           </button>
         </div>
+
+        {/* 에러 모달 */}
+        {showErrorModal && (
+          <div className="error-modal-overlay" onClick={() => setShowErrorModal(false)}>
+            <div className="error-modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="error-modal-title">예약 정보가 없어요</h2>
+              <p className="error-modal-description">
+                올바른 예약자명과 휴대폰 번호인지<br />다시 확인해 주세요.
+              </p>
+              <button className="error-modal-button" onClick={() => setShowErrorModal(false)}>
+                확인
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
