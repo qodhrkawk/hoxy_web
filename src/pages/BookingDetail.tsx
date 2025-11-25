@@ -96,6 +96,13 @@ export default function BookingDetail() {
             console.log('[BookingDetail] ✗ No phone number in response')
           }
 
+          // 고객 이름 정보 로깅 (처리하지는 않음)
+          if (linkResponse.customer_name) {
+            console.log('[BookingDetail] ✓ Customer name exists in response:', linkResponse.customer_name)
+          } else {
+            console.log('[BookingDetail] ✗ No customer name in response')
+          }
+
           // TODO: 테스트용 - 무조건 고객 정보 입력 폼 표시
           console.log('[BookingDetail] → Showing customer info form (forced for testing)')
           setShowCustomerInfoForm(true)
