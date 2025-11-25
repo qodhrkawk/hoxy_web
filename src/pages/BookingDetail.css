@@ -17,9 +17,11 @@
 }
 
 .logo-image {
-  height: 40px;
+  width: 110px;
+  height: 24px;
   object-fit: contain;
   margin-bottom: 60px;
+  align-self: flex-start;
 }
 
 .info-title {

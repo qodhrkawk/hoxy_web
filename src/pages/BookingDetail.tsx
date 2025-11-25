@@ -41,7 +41,7 @@ export default function BookingDetail() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [showCustomerInfoForm, setShowCustomerInfoForm] = useState(false)
+  const [showCustomerInfoForm, setShowCustomerInfoForm] = useState(!!urlChatId)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
