@@ -325,7 +325,7 @@
   border-radius: 16px;
   padding: 20px;
   border: 1px solid #F6F6F6;
-  max-width: 70%;
+  max-width: 85%;
 }
 
 .user-message {
@@ -408,6 +408,10 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.info-row .value.dates div {
+  white-space: nowrap;
 }
 
 .ai-card .card-content p {
