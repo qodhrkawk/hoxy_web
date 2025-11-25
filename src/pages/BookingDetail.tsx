@@ -83,8 +83,9 @@ export default function BookingDetail() {
     console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
 
     // phone number가 없으면 고객 정보 입력 폼 표시
-    if (!phoneWithoutHyphens) {
-      console.log('[BookingDetail] no phone number found, showing customer info form')
+    // TODO: 테스트용 - 항상 고객 정보 입력 폼 표시
+    if (!phoneWithoutHyphens || true) {
+      console.log('[BookingDetail] showing customer info form for testing')
       setShowCustomerInfoForm(true)
       return
     }
