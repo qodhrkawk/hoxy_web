@@ -399,11 +399,17 @@ export default function BookingDetail() {
             console.log('[BookingDetail] realtime parsed imageUrls:', imageUrls)
           }
 
+          // 사용자가 보낸 메시지는 이미 낙관적 업데이트로 추가했으므로 무시
+          if (newMsg.sender === 'customer') {
+            console.log('[BookingDetail] ignoring customer message from realtime (already added optimistically)')
+            return
+          }
+
           const chatMessage: ChatMessage = {
             id: String(newMsg.id),
             text: text || '',
             timestamp: time,
-            isUser: newMsg.sender === 'customer',
+            isUser: false, // 여기서는 항상 false (customer 메시지는 위에서 필터링)
             type: newMsg.type,
             content: parsedContent,
             isRead: newMsg.isRead || false,
@@ -421,10 +427,8 @@ export default function BookingDetail() {
           // 새 메시지 수신 시 읽음 처리
           markMessagesAsRead()
 
-          // 상대방 메시지인 경우 이전 내 메시지를 읽음 처리
-          if (!chatMessage.isUser) {
-            setTimeout(() => markPreviousMessagesAsRead(), 100)
-          }
+          // 상대방 메시지이므로 이전 내 메시지를 읽음 처리
+          setTimeout(() => markPreviousMessagesAsRead(), 100)
         }
       )
       .subscribe()
