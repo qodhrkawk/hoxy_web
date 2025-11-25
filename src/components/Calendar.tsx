@@ -70,8 +70,17 @@ export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: 
     )
   }
 
+  const isPastDate = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const compareDate = new Date(date)
+    compareDate.setHours(0, 0, 0, 0)
+    return compareDate < today
+  }
+
   const handleDateClick = (date: Date) => {
     if (!isCurrentMonth(date)) return
+    if (isPastDate(date)) return
 
     const dateStr = date.toDateString()
 
@@ -137,6 +146,7 @@ export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: 
             if (!date) return <div key={index} className="day empty"></div>
             const isCurrentMonthDate = isCurrentMonth(date)
             const isSelectedDate = isSelected(date)
+            const isPast = isPastDate(date)
 
             return (
               <button
@@ -144,8 +154,9 @@ export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: 
                 type="button"
                 className={`day ${!isCurrentMonthDate ? 'other-month' : ''} ${
                   isSelectedDate ? 'selected' : ''
-                }`}
+                } ${isPast ? 'disabled' : ''}`}
                 onClick={() => handleDateClick(date)}
+                disabled={isPast}
               >
                 {date.getDate()}
               </button>

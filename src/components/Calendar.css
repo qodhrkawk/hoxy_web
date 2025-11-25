@@ -75,7 +75,7 @@
   transition: background-color 0.2s;
 }
 
-.day:hover:not(.other-month):not(.empty) {
+.day:hover:not(.other-month):not(.empty):not(.disabled) {
   background-color: #f5f5f5;
 }
 
@@ -91,6 +91,16 @@
 
 .day.empty {
   cursor: default;
+}
+
+.day.disabled {
+  color: #E5E5E5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.day.disabled:hover {
+  background-color: transparent;
 }
 
 .date-selection-summary {
