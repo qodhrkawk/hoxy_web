@@ -56,13 +56,16 @@ export default function BookingDetail() {
         try {
           // 토큰으로 링크 정보 조회
           const linkResponse: any = await networkManager.get(`/v1/chats/links/${urlChatId}`, {}, undefined)
-          console.log('[BookingDetail] link response:', JSON.stringify(linkResponse, null, 2))
+          console.log('[BookingDetail] ===== Link Response =====')
+          console.log('[BookingDetail] Full response:', JSON.stringify(linkResponse, null, 2))
 
           // chatId 저장
           const chatId = linkResponse.chat?.id
           if (chatId) {
             localStorage.setItem('chatId', chatId)
-            console.log('[BookingDetail] saved chatId:', chatId)
+            console.log('[BookingDetail] ✓ Saved chatId:', chatId)
+          } else {
+            console.warn('[BookingDetail] ✗ No chatId in response')
           }
 
           // 작가 정보 저장
@@ -75,30 +78,25 @@ export default function BookingDetail() {
             }
             localStorage.setItem('artistInfo', JSON.stringify(authorInfo))
             setArtistName(authorInfo.brand_name || authorInfo.name || '작가님')
-            console.log('[BookingDetail] saved author info:', authorInfo)
+            console.log('[BookingDetail] ✓ Saved author info:')
+            console.log('  - ID:', authorInfo.id)
+            console.log('  - Name:', authorInfo.name)
+            console.log('  - Brand Name:', authorInfo.brand_name)
+            console.log('  - Email:', authorInfo.email)
+            console.log('  - Display Name:', authorInfo.brand_name || authorInfo.name)
+          } else {
+            console.warn('[BookingDetail] ✗ No author info in response')
           }
 
-          // 전화번호가 이미 있는 경우 localStorage에 저장
+          // 전화번호 정보 로깅 (처리하지는 않음)
           if (linkResponse.chat?.phone) {
-            const existingPhone = linkResponse.chat.phone
-            const bookingData = {
-              name: '', // 이름은 서버 응답에 없으므로 비워둠
-              phone: existingPhone,
-              product: linkResponse.chat.product_name || '',
-              date1: null,
-              date2: null,
-              date3: null,
-            }
-            localStorage.setItem('bookingData', JSON.stringify(bookingData))
-            setBookingData(bookingData)
-            console.log('[BookingDetail] saved existing phone:', existingPhone)
-
-            // phone이 있으면 바로 채팅 화면으로
-            window.location.reload()
-            return
+            console.log('[BookingDetail] ✓ Phone number exists in response:', linkResponse.chat.phone)
+          } else {
+            console.log('[BookingDetail] ✗ No phone number in response')
           }
 
-          // phone이 없으면 입력 폼 표시
+          // TODO: 테스트용 - 무조건 고객 정보 입력 폼 표시
+          console.log('[BookingDetail] → Showing customer info form (forced for testing)')
           setShowCustomerInfoForm(true)
         } catch (err) {
           console.error('[BookingDetail] failed to load link info:', err)
