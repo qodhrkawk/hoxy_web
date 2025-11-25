@@ -79,6 +79,14 @@
   border-color: #000;
 }
 
+.form-input.error {
+  border-color: #FF0000;
+}
+
+.form-input.error:focus {
+  border-color: #FF0000;
+}
+
 .submit-button {
   width: 100%;
   height: 56px;

@@ -44,6 +44,7 @@ export default function BookingDetail() {
   const [showCustomerInfoForm, setShowCustomerInfoForm] = useState(!!urlChatId)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
+  const [isPhoneValid, setIsPhoneValid] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -771,10 +772,23 @@ export default function BookingDetail() {
               <label className="form-label">휴대폰 번호</label>
               <input
                 type="tel"
-                className="form-input"
+                className={`form-input ${!isPhoneValid ? 'error' : ''}`}
                 placeholder="휴대폰 번호를 입력해 주세요"
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setCustomerPhone(value)
+
+                  // 휴대폰 번호 유효성 검증 (입력된 값이 있을 때만)
+                  if (value.trim()) {
+                    const phoneDigits = value.replace(/-/g, '')
+                    const isValid = /^01[0-9]\d{7,8}$/.test(phoneDigits)
+                    setIsPhoneValid(isValid)
+                  } else {
+                    // 빈 값이면 valid로 처리 (에러 표시 안함)
+                    setIsPhoneValid(true)
+                  }
+                }}
               />
             </div>
           </div>
@@ -782,7 +796,7 @@ export default function BookingDetail() {
           <button
             className="submit-button"
             onClick={handleCustomerInfoSubmit}
-            disabled={!customerName.trim() || !customerPhone.trim()}
+            disabled={!customerName.trim() || !customerPhone.trim() || !isPhoneValid}
           >
             확인
           </button>
