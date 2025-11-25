@@ -20,20 +20,20 @@
   width: 110px;
   height: 24px;
   object-fit: contain;
-  margin-bottom: 60px;
+  margin-bottom: 22px;
   align-self: flex-start;
 }
 
 .info-title {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   color: #000;
   margin: 0 0 16px 0;
   line-height: 1.4;
 }
 
 .info-description {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: #666;
   margin: 0 0 40px 0;
@@ -99,6 +99,17 @@
 
 .submit-button:active {
   opacity: 0.8;
+}
+
+.submit-button:disabled {
+  background: #E5E5E5;
+  color: #CACACA;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.submit-button:disabled:hover {
+  opacity: 1;
 }
 
 .chat-container {

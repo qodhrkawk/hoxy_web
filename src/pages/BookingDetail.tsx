@@ -779,7 +779,11 @@ export default function BookingDetail() {
             </div>
           </div>
 
-          <button className="submit-button" onClick={handleCustomerInfoSubmit}>
+          <button
+            className="submit-button"
+            onClick={handleCustomerInfoSubmit}
+            disabled={!customerName.trim() || !customerPhone.trim()}
+          >
             확인
           </button>
         </div>
