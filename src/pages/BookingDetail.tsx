@@ -699,7 +699,7 @@ export default function BookingDetail() {
     return (
       <div className="customer-info-container">
         <div className="customer-info-content">
-          <div className="logo">HOXY</div>
+          <img src="/images/LOGO.png" alt="HOXY" className="logo-image" />
           <h1 className="info-title">확인을 위해 본인 인증을<br />진행해 주세요</h1>
           <p className="info-description">예약자 이름과 전화번호를 입력해 주세요.</p>
 
