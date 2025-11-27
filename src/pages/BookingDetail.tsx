@@ -51,6 +51,7 @@ export default function BookingDetail() {
   const [modalTouchStart, setModalTouchStart] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isInitialLoad = useRef(true)
 
   useEffect(() => {
     // URL에서 token이 온 경우 서버에서 정보 조회
@@ -469,12 +470,21 @@ export default function BookingDetail() {
     return `${year}년 ${month}월 ${day}일 ${dayName}`
   }
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior })
   }
 
   useEffect(() => {
-    scrollToBottom()
+    if (messages.length > 0) {
+      // 첫 로딩이면 애니메이션 없이 즉시 스크롤
+      if (isInitialLoad.current) {
+        scrollToBottom('auto')
+        isInitialLoad.current = false
+      } else {
+        // 이후에는 부드럽게 스크롤
+        scrollToBottom('smooth')
+      }
+    }
   }, [messages])
 
   const getCurrentTime = () => {
