@@ -440,6 +440,24 @@ export default function BookingDetail() {
     }
   }, [])
 
+  // 페이지가 다시 보일 때 (백그라운드에서 포그라운드로 전환) 메시지 갱신
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[BookingDetail] page became visible, refreshing messages')
+        const storedChatId = localStorage.getItem('chatId')
+        if (storedChatId) {
+          loadChatMessages()
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   const formatDateSeparator = () => {
     const today = new Date()
