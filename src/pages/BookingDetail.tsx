@@ -49,9 +49,14 @@ export default function BookingDetail() {
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [modalSwipeY, setModalSwipeY] = useState(0)
   const [modalTouchStart, setModalTouchStart] = useState(0)
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isInitialLoad = useRef(true)
+  const chatTopRef = useRef<HTMLDivElement>(null)
+  const oldestMessageId = useRef<string | null>(null)
 
   useEffect(() => {
     // URL에서 token이 온 경우 서버에서 정보 조회
@@ -460,6 +465,31 @@ export default function BookingDetail() {
     }
   }, [])
 
+  // 스크롤 상단 감지 (이전 메시지 로드)
+  useEffect(() => {
+    if (!chatTopRef.current) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry.isIntersecting && hasMoreMessages && !isLoadingMore) {
+          console.log('[BookingDetail] top reached, loading more messages')
+          loadChatMessages(true)
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '100px'
+      }
+    )
+
+    observer.observe(chatTopRef.current)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [hasMoreMessages, isLoadingMore])
+
   const formatDateSeparator = () => {
     const today = new Date()
     const year = today.getFullYear()
@@ -657,8 +687,32 @@ export default function BookingDetail() {
       const result = await response.json()
       console.log('[BookingDetail] image upload response:', JSON.stringify(result, null, 2))
 
-      // 업로드 성공: 임시 메시지 제거 (서버 응답이 realtime으로 올 것)
-      setMessages((prev) => prev.filter((m) => m.id !== tempId))
+      // 업로드 성공: 서버 응답으로 임시 메시지 업데이트
+      if (result?.id) {
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id === tempId) {
+              // 실제 서버 이미지 URL로 교체 (있으면)
+              const serverImageUrls = result.media_url
+                ? (Array.isArray(result.media_url) ? result.media_url : [result.media_url])
+                : m.imageUrls
+
+              return {
+                ...m,
+                id: String(result.id),
+                isUploading: false,
+                imageUrls: serverImageUrls,
+              }
+            }
+            return m
+          })
+        )
+      } else {
+        // ID가 없으면 업로딩 상태만 해제
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, isUploading: false } : m))
+        )
+      }
     } catch (err) {
       console.error('[BookingDetail] failed to upload images:', err)
       alert('이미지 전송에 실패했습니다. 다시 시도해 주세요.')
@@ -828,7 +882,7 @@ export default function BookingDetail() {
   }
 
   // 채팅 메시지 로드 함수
-  const loadChatMessages = async () => {
+  const loadChatMessages = async (loadMore = false) => {
     const storedChatId = localStorage.getItem('chatId')
     if (!storedChatId) {
       console.error('[BookingDetail] chatId not found')
@@ -852,13 +906,38 @@ export default function BookingDetail() {
       return
     }
 
+    if (loadMore && isLoadingMore) {
+      console.log('[BookingDetail] already loading more messages')
+      return
+    }
+
+    if (loadMore && !hasMoreMessages) {
+      console.log('[BookingDetail] no more messages to load')
+      return
+    }
+
     try {
-      const params = { phone: phoneWithoutHyphens }
-      console.log('[BookingDetail] fetching messages for chatId:', storedChatId, 'with phone:', phoneWithoutHyphens ? 'present' : 'missing')
-      console.log('[BookingDetail] GET request params:', JSON.stringify(params, null, 2))
+      if (loadMore) setIsLoadingMore(true)
+
+      const params: any = {
+        phone: phoneWithoutHyphens,
+        limit: 20
+      }
+
+      // 더 로드할 때는 before_id 추가 (가장 오래된 메시지 ID 이전 것들 가져오기)
+      if (loadMore && oldestMessageId.current) {
+        params.before_id = oldestMessageId.current
+      }
+
+      console.log('[BookingDetail] fetching messages for chatId:', storedChatId, loadMore ? '(loading more)' : '(initial)', 'with params:', JSON.stringify(params, null, 2))
       const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, undefined)
       console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
       const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
+
+      // 더 로드할 메시지가 있는지 확인 (20개 미만이면 마지막)
+      if (apiMessages.length < 20) {
+        setHasMoreMessages(false)
+      }
 
       // timestamp 기준으로 정렬 (오래된 것부터)
       const sortedMessages = apiMessages.sort((a, b) => {
@@ -936,21 +1015,47 @@ export default function BookingDetail() {
           dateString,
         }
       })
-      console.log('[BookingDetail] mapped messages:', mapped)
-      setMessages(mapped)
+      console.log('[BookingDetail] mapped messages:', mapped.length, 'messages', loadMore ? '(more loaded)' : '(initial load)')
 
-      // 메시지 로드 완료 후 읽음 처리
-      markMessagesAsRead()
+      // 가장 오래된 메시지 ID 업데이트
+      if (mapped.length > 0) {
+        oldestMessageId.current = mapped[0].id
+      }
 
-      // 상대방 메시지 이전의 내 메시지를 읽음 처리
-      setTimeout(() => markPreviousMessagesAsRead(), 100)
+      if (loadMore) {
+        // 더 로드: 기존 메시지 앞에 추가 (중복 제거)
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id))
+          const newMessages = mapped.filter((m) => !existingIds.has(m.id))
+          return [...newMessages, ...prev]
+        })
+      } else {
+        // 초기 로드: 덮어쓰기
+        setMessages(mapped)
+      }
+
+      // 메시지 로드 완료 후 읽음 처리 (초기 로드시만)
+      if (!loadMore) {
+        markMessagesAsRead()
+
+        // 상대방 메시지 이전의 내 메시지를 읽음 처리
+        setTimeout(() => markPreviousMessagesAsRead(), 100)
+      }
     } catch (err) {
       console.error('[BookingDetail] failed to load chat messages:', err)
+    } finally {
+      if (loadMore) setIsLoadingMore(false)
     }
   }
 
   const handleSendMessage = async () => {
     if (!message.trim()) return
+
+    // 이미 전송 중이면 무시 (race condition 방지)
+    if (isSendingMessage) {
+      console.log('[BookingDetail] message sending in progress, ignoring')
+      return
+    }
 
     const messageText = message.trim()
     setMessage('') // 입력 필드 먼저 비우기
@@ -997,6 +1102,8 @@ export default function BookingDetail() {
     }
 
     try {
+      setIsSendingMessage(true)
+
       const body: any = {
         text: messageText,
         sender: 'customer',
@@ -1024,6 +1131,8 @@ export default function BookingDetail() {
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       alert('메시지 전송에 실패했습니다. 다시 시도해 주세요.')
       setMessage(messageText) // 입력 필드에 다시 넣기
+    } finally {
+      setIsSendingMessage(false)
     }
   }
 
@@ -1112,6 +1221,13 @@ export default function BookingDetail() {
             촬영 서비스의 품질·이행 책임은 전적으로 작가에게 있습니다.
           </p>
         </div>
+
+        {hasMoreMessages && <div ref={chatTopRef} style={{ height: '1px' }} />}
+        {isLoadingMore && (
+          <div style={{ textAlign: 'center', padding: '10px', color: '#666' }}>
+            <span>이전 메시지 불러오는 중...</span>
+          </div>
+        )}
 
         {messages.map((msg, index) => {
           // 날짜 구분자 표시: 첫 메시지이거나 이전 메시지와 날짜가 다른 경우
@@ -1436,12 +1552,12 @@ export default function BookingDetail() {
             placeholder="메시지를 입력해 주세요"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && message.trim() && handleSendMessage()}
+            onKeyPress={(e) => e.key === 'Enter' && message.trim() && !isSendingMessage && handleSendMessage()}
           />
           <button
             className={`send-button ${message.trim() ? 'active' : ''}`}
             onClick={handleSendMessage}
-            disabled={!message.trim()}
+            disabled={!message.trim() || isSendingMessage}
           >
             <img src="/images/send.png" alt="전송" />
           </button>
