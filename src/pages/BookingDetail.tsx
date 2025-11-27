@@ -274,21 +274,28 @@ export default function BookingDetail() {
             if (m.media_url) {
               console.log('[BookingDetail] parsing media_url:', m.media_url, 'type:', typeof m.media_url)
               if (Array.isArray(m.media_url)) {
-                // 이미 배열인 경우
-                imageUrls = m.media_url
+                // 배열의 각 URL에서 따옴표 제거
+                imageUrls = m.media_url.map((url: string) =>
+                  url.replace(/^["']|["']$/g, '').trim()
+                )
               } else if (typeof m.media_url === 'string') {
                 // 문자열인 경우
                 if (m.media_url.startsWith('[')) {
                   // JSON 배열 문자열
                   try {
-                    imageUrls = JSON.parse(m.media_url)
+                    const parsed = JSON.parse(m.media_url)
+                    // 파싱된 배열의 각 URL에서 따옴표 제거
+                    imageUrls = Array.isArray(parsed)
+                      ? parsed.map((url: string) => url.replace(/^["']|["']$/g, '').trim())
+                      : [parsed.replace(/^["']|["']$/g, '').trim()]
                   } catch (e) {
                     console.error('[BookingDetail] failed to parse JSON array:', e)
-                    imageUrls = []
+                    // 파싱 실패 시 따옴표와 대괄호 제거 후 단일 URL로 처리
+                    imageUrls = [m.media_url.replace(/^["'\[]|["'\]]$/g, '').trim()]
                   }
                 } else {
-                  // 단일 URL 문자열
-                  imageUrls = [m.media_url]
+                  // 단일 URL에서 따옴표 제거
+                  imageUrls = [m.media_url.replace(/^["']|["']$/g, '').trim()]
                 }
               }
               console.log('[BookingDetail] parsed imageUrls:', imageUrls)
@@ -385,21 +392,28 @@ export default function BookingDetail() {
           if (newMsg.media_url) {
             console.log('[BookingDetail] realtime parsing media_url:', newMsg.media_url, 'type:', typeof newMsg.media_url)
             if (Array.isArray(newMsg.media_url)) {
-              // 이미 배열인 경우
-              imageUrls = newMsg.media_url
+              // 배열의 각 URL에서 따옴표 제거
+              imageUrls = newMsg.media_url.map((url: string) =>
+                url.replace(/^["']|["']$/g, '').trim()
+              )
             } else if (typeof newMsg.media_url === 'string') {
               // 문자열인 경우
               if (newMsg.media_url.startsWith('[')) {
                 // JSON 배열 문자열
                 try {
-                  imageUrls = JSON.parse(newMsg.media_url)
+                  const parsed = JSON.parse(newMsg.media_url)
+                  // 파싱된 배열의 각 URL에서 따옴표 제거
+                  imageUrls = Array.isArray(parsed)
+                    ? parsed.map((url: string) => url.replace(/^["']|["']$/g, '').trim())
+                    : [parsed.replace(/^["']|["']$/g, '').trim()]
                 } catch (e) {
                   console.error('[BookingDetail] realtime failed to parse JSON array:', e)
-                  imageUrls = []
+                  // 파싱 실패 시 따옴표와 대괄호 제거 후 단일 URL로 처리
+                  imageUrls = [newMsg.media_url.replace(/^["'\[]|["'\]]$/g, '').trim()]
                 }
               } else {
-                // 단일 URL 문자열
-                imageUrls = [newMsg.media_url]
+                // 단일 URL에서 따옴표 제거
+                imageUrls = [newMsg.media_url.replace(/^["']|["']$/g, '').trim()]
               }
             }
             console.log('[BookingDetail] realtime parsed imageUrls:', imageUrls)
@@ -689,19 +703,42 @@ export default function BookingDetail() {
 
       // 업로드 성공: 서버 응답으로 임시 메시지 업데이트
       if (result?.id) {
+        // 서버 이미지 URL 파싱
+        let serverImageUrls: string[] = []
+        if (result.media_url) {
+          if (Array.isArray(result.media_url)) {
+            // 배열의 각 URL에서 따옴표 제거
+            serverImageUrls = result.media_url.map((url: string) =>
+              url.replace(/^["']|["']$/g, '').trim()
+            )
+          } else if (typeof result.media_url === 'string') {
+            if (result.media_url.startsWith('[')) {
+              try {
+                const parsed = JSON.parse(result.media_url)
+                // 파싱된 배열의 각 URL에서 따옴표 제거
+                serverImageUrls = Array.isArray(parsed)
+                  ? parsed.map((url: string) => url.replace(/^["']|["']$/g, '').trim())
+                  : [parsed.replace(/^["']|["']$/g, '').trim()]
+              } catch {
+                // 파싱 실패 시 따옴표 제거 후 단일 URL로 처리
+                serverImageUrls = [result.media_url.replace(/^["'\[]|["'\]]$/g, '').trim()]
+              }
+            } else {
+              // 단일 URL에서 따옴표 제거
+              serverImageUrls = [result.media_url.replace(/^["']|["']$/g, '').trim()]
+            }
+          }
+        }
+
         setMessages((prev) =>
           prev.map((m) => {
             if (m.id === tempId) {
-              // 실제 서버 이미지 URL로 교체 (있으면)
-              const serverImageUrls = result.media_url
-                ? (Array.isArray(result.media_url) ? result.media_url : [result.media_url])
-                : m.imageUrls
-
               return {
                 ...m,
                 id: String(result.id),
                 isUploading: false,
-                imageUrls: serverImageUrls,
+                // 서버 URL로 교체 (일관성 유지)
+                imageUrls: serverImageUrls.length > 0 ? serverImageUrls : m.imageUrls,
               }
             }
             return m
@@ -987,17 +1024,26 @@ export default function BookingDetail() {
         if (m.media_url) {
           console.log('[BookingDetail] parsing media_url:', m.media_url, 'type:', typeof m.media_url)
           if (Array.isArray(m.media_url)) {
-            imageUrls = m.media_url
+            // 배열의 각 URL에서 따옴표 제거
+            imageUrls = m.media_url.map((url: string) =>
+              url.replace(/^["']|["']$/g, '').trim()
+            )
           } else if (typeof m.media_url === 'string') {
             if (m.media_url.startsWith('[')) {
               try {
-                imageUrls = JSON.parse(m.media_url)
+                const parsed = JSON.parse(m.media_url)
+                // 파싱된 배열의 각 URL에서 따옴표 제거
+                imageUrls = Array.isArray(parsed)
+                  ? parsed.map((url: string) => url.replace(/^["']|["']$/g, '').trim())
+                  : [parsed.replace(/^["']|["']$/g, '').trim()]
               } catch (e) {
                 console.error('[BookingDetail] failed to parse JSON array:', e)
-                imageUrls = []
+                // 파싱 실패 시 따옴표와 대괄호 제거 후 단일 URL로 처리
+                imageUrls = [m.media_url.replace(/^["'\[]|["'\]]$/g, '').trim()]
               }
             } else {
-              imageUrls = [m.media_url]
+              // 단일 URL에서 따옴표 제거
+              imageUrls = [m.media_url.replace(/^["']|["']$/g, '').trim()]
             }
           }
           console.log('[BookingDetail] parsed imageUrls:', imageUrls)
