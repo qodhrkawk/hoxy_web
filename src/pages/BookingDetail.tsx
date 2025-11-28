@@ -52,6 +52,7 @@ export default function BookingDetail() {
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
+  const [isInitialMessagesLoaded, setIsInitialMessagesLoaded] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isInitialLoad = useRef(true)
@@ -481,7 +482,8 @@ export default function BookingDetail() {
 
   // 스크롤 상단 감지 (이전 메시지 로드)
   useEffect(() => {
-    if (!chatTopRef.current) return
+    // 초기 메시지 로드가 완료되지 않았으면 observer 비활성화
+    if (!chatTopRef.current || !isInitialMessagesLoaded) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -502,7 +504,7 @@ export default function BookingDetail() {
     return () => {
       observer.disconnect()
     }
-  }, [hasMoreMessages, isLoadingMore])
+  }, [hasMoreMessages, isLoadingMore, isInitialMessagesLoaded])
 
   const formatDateSeparator = () => {
     const today = new Date()
@@ -1086,6 +1088,9 @@ export default function BookingDetail() {
 
         // 상대방 메시지 이전의 내 메시지를 읽음 처리
         setTimeout(() => markPreviousMessagesAsRead(), 100)
+
+        // 초기 메시지 로드 완료 표시 (IntersectionObserver 활성화)
+        setIsInitialMessagesLoaded(true)
       }
     } catch (err) {
       console.error('[BookingDetail] failed to load chat messages:', err)
