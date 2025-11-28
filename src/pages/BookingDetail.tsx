@@ -58,6 +58,8 @@ export default function BookingDetail() {
   const isInitialLoad = useRef(true)
   const chatTopRef = useRef<HTMLDivElement>(null)
   const oldestMessageId = useRef<string | null>(null)
+  const allMessages = useRef<ChatMessage[]>([]) // 서버에서 받은 전체 메시지 저장
+  const displayedCount = useRef<number>(0) // 현재 UI에 표시된 메시지 개수
 
   useEffect(() => {
     // URL에서 token이 온 경우 서버에서 정보 조회
@@ -956,27 +958,50 @@ export default function BookingDetail() {
     }
 
     try {
-      if (loadMore) setIsLoadingMore(true)
+      if (loadMore) {
+        // 더 로드: 클라이언트에서 이미 저장된 메시지에서 20개씩 추가 표시
+        setIsLoadingMore(true)
 
+        const currentDisplayed = displayedCount.current
+        const totalMessages = allMessages.current.length
+        const remainingMessages = totalMessages - currentDisplayed
+
+        if (remainingMessages <= 0) {
+          console.log('[BookingDetail] no more messages to display')
+          setHasMoreMessages(false)
+          setIsLoadingMore(false)
+          return
+        }
+
+        // 이전 20개 (또는 남은 개수)를 가져옴
+        const loadCount = Math.min(20, remainingMessages)
+        const startIndex = totalMessages - currentDisplayed - loadCount
+        const previousMessages = allMessages.current.slice(startIndex, totalMessages - currentDisplayed)
+
+        console.log('[BookingDetail] loading more messages from client cache:', loadCount, 'messages')
+
+        // 기존 메시지 앞에 추가
+        setMessages((prev) => [...previousMessages, ...prev])
+        displayedCount.current += loadCount
+
+        // 더 이상 표시할 메시지가 없으면
+        if (displayedCount.current >= totalMessages) {
+          setHasMoreMessages(false)
+        }
+
+        setIsLoadingMore(false)
+        return
+      }
+
+      // 초기 로드: 서버에서 전체 메시지 가져오기
       const params: any = {
-        phone: phoneWithoutHyphens,
-        limit: 20
+        phone: phoneWithoutHyphens
       }
 
-      // 더 로드할 때는 before_id 추가 (가장 오래된 메시지 ID 이전 것들 가져오기)
-      if (loadMore && oldestMessageId.current) {
-        params.before_id = oldestMessageId.current
-      }
-
-      console.log('[BookingDetail] fetching messages for chatId:', storedChatId, loadMore ? '(loading more)' : '(initial)', 'with params:', JSON.stringify(params, null, 2))
+      console.log('[BookingDetail] fetching all messages for chatId:', storedChatId, 'with params:', JSON.stringify(params, null, 2))
       const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, undefined)
       console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
       const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
-
-      // 더 로드할 메시지가 있는지 확인 (20개 미만이면 마지막)
-      if (apiMessages.length < 20) {
-        setHasMoreMessages(false)
-      }
 
       // timestamp 기준으로 정렬 (오래된 것부터)
       const sortedMessages = apiMessages.sort((a, b) => {
@@ -1063,39 +1088,36 @@ export default function BookingDetail() {
           dateString,
         }
       })
-      console.log('[BookingDetail] mapped messages:', mapped.length, 'messages', loadMore ? '(more loaded)' : '(initial load)')
+      console.log('[BookingDetail] mapped messages:', mapped.length, 'messages (initial load)')
 
-      // 가장 오래된 메시지 ID 업데이트
-      if (mapped.length > 0) {
-        oldestMessageId.current = mapped[0].id
-      }
+      // 전체 메시지 저장
+      allMessages.current = mapped
 
-      if (loadMore) {
-        // 더 로드: 기존 메시지 앞에 추가 (중복 제거)
-        setMessages((prev) => {
-          const existingIds = new Set(prev.map((m) => m.id))
-          const newMessages = mapped.filter((m) => !existingIds.has(m.id))
-          return [...newMessages, ...prev]
-        })
+      // 최신 20개만 표시 (배열 뒤에서부터 20개)
+      const initialDisplayCount = Math.min(20, mapped.length)
+      const initialMessages = mapped.slice(-initialDisplayCount)
+      setMessages(initialMessages)
+      displayedCount.current = initialDisplayCount
+
+      console.log('[BookingDetail] displaying', initialDisplayCount, 'of', mapped.length, 'messages')
+
+      // 더 표시할 메시지가 있는지 확인
+      if (mapped.length <= 20) {
+        setHasMoreMessages(false)
       } else {
-        // 초기 로드: 덮어쓰기
-        setMessages(mapped)
+        setHasMoreMessages(true)
       }
 
-      // 메시지 로드 완료 후 읽음 처리 (초기 로드시만)
-      if (!loadMore) {
-        markMessagesAsRead()
+      // 메시지 로드 완료 후 읽음 처리
+      markMessagesAsRead()
 
-        // 상대방 메시지 이전의 내 메시지를 읽음 처리
-        setTimeout(() => markPreviousMessagesAsRead(), 100)
+      // 상대방 메시지 이전의 내 메시지를 읽음 처리
+      setTimeout(() => markPreviousMessagesAsRead(), 100)
 
-        // 초기 메시지 로드 완료 표시 (IntersectionObserver 활성화)
-        setIsInitialMessagesLoaded(true)
-      }
+      // 초기 메시지 로드 완료 표시 (IntersectionObserver 활성화)
+      setIsInitialMessagesLoaded(true)
     } catch (err) {
       console.error('[BookingDetail] failed to load chat messages:', err)
-    } finally {
-      if (loadMore) setIsLoadingMore(false)
     }
   }
 
