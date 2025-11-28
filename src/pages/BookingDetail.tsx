@@ -57,7 +57,6 @@ export default function BookingDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isInitialLoad = useRef(true)
   const chatTopRef = useRef<HTMLDivElement>(null)
-  const oldestMessageId = useRef<string | null>(null)
   const allMessages = useRef<ChatMessage[]>([]) // 서버에서 받은 전체 메시지 저장
   const displayedCount = useRef<number>(0) // 현재 UI에 표시된 메시지 개수
 
