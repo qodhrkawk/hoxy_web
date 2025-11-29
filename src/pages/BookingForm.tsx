@@ -78,7 +78,7 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
       // 응답에서 chat id 추출: response.chat.id 또는 response.reservation.chat_id
       const chatId: string | undefined = response?.chat?.id || response?.reservation?.chat_id
       console.log('[BookingForm] extracted chatId:', chatId, 'from chat.id:', response?.chat?.id, 'or reservation.chat_id:', response?.reservation?.chat_id)
-      
+
       if (chatId) {
         localStorage.setItem('chatId', chatId)
         console.log('[BookingForm] chatId saved to localStorage:', chatId)
@@ -90,6 +90,15 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
           console.log('[BookingForm] reservation token saved from response:', token ? 'present' : 'missing')
         } else {
           console.warn('[BookingForm] no token found in reservation response. Available keys:', Object.keys(response || {}))
+        }
+
+        // 예약 시간 추출 및 저장
+        const reservationTime = response?.reservation?.reservation_time || response?.reservation_time || response?.reservationTime
+        if (reservationTime) {
+          localStorage.setItem('reservationTime', reservationTime)
+          console.log('[BookingForm] reservationTime saved to localStorage:', reservationTime)
+        } else {
+          console.warn('[BookingForm] no reservationTime found in response')
         }
       } else {
         console.error('[BookingForm] chatId not found in response. Response structure:', {
