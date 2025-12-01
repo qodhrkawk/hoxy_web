@@ -256,14 +256,15 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
             </label>
             <div className="agreement-box">
               <p className="agreement-text">
-                <img src="/images/LOGO.png" alt="HOXY" className="inline-logo" />
-                에서 검증한 작가님으로
+                작가님의 답변이 도착하는 즉시 알려드릴게요!
                 <br />
-                고객님의 개인정보는 상담 답변 알림 목적으로만 이용되며,
+                <strong>HOXY</strong>에서 직접 검증한 작가님입니다.
+                <br />
+                취합한 고객님의 개인정보는 답변 알림 목적으로만 이용되며,
                 <br />
                 삭제 요청을 주시기 전까지 보유합니다.
                 <br />
-                제휴하시지 않으면 상담 답변 알림을 받을 수 없어요.
+                동의하지 않으시면, 문의에 대한 답변 알림을 받을 수 없어요.
               </p>
             </div>
           </div>
