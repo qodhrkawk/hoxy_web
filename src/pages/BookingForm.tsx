@@ -256,15 +256,17 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
             </label>
             <div className="agreement-box">
               <p className="agreement-text">
-                작가님의 답변이 도착하는 즉시 알려드릴게요!
+                <strong>작가님의 답변이 도착하는 즉시 알려드릴게요!</strong>
                 <br />
-                <strong>HOXY</strong>에서 직접 검증한 작가님입니다.
+                HOXY에서 직접 검증한 작가님입니다.
                 <br />
-                취합한 고객님의 개인정보는 답변 알림 목적으로만 이용되며,
+                취합한 고객님의 개인정보는
+                <br />
+                답변 알림 목적으로만 이용되며,
                 <br />
                 삭제 요청을 주시기 전까지 보유합니다.
                 <br />
-                동의하지 않으시면, 문의에 대한 답변 알림을 받을 수 없어요.
+                미동의시, 작가님의 답변 알림을 받을 수 없어요.
               </p>
             </div>
           </div>
