@@ -471,10 +471,12 @@ export default function BookingDetail() {
     }
 
     try {
-      await networkManager.post(`/v1/chats/${storedChatId}/read`, { phone }, undefined)
-      console.log('[BookingDetail] marked messages as read')
+      console.log('[BookingDetail] 🟢 Sending read request to server - chatId:', storedChatId, 'phone:', phone)
+      const response = await networkManager.post(`/v1/chats/${storedChatId}/read`, { phone }, undefined)
+      console.log('[BookingDetail] 🟢 Read request response:', JSON.stringify(response, null, 2))
+      console.log('[BookingDetail] ✅ Marked messages as read successfully')
     } catch (err) {
-      console.error('[BookingDetail] failed to mark messages as read:', err)
+      console.error('[BookingDetail] ❌ Failed to mark messages as read:', err)
     }
   }
 
