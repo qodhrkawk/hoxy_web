@@ -210,20 +210,20 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
               value={formData.product}
               onChange={(e) => setFormData({ ...formData, product: e.target.value })}
               required
+              disabled={!products || products.length === 0}
             >
               {/* 항상 placeholder를 제공해 초기값이 선택되지 않도록 유지 */}
-              <option value="">스냅 상품을 선택해 주세요</option>
-              {products && products.length > 0
-                ? products.map((p) => (
-                    <option key={p.id} value={p.name}>
-                      {p.name}
-                    </option>
-                  ))
-                : ['상품 1', '상품 2', '상품 3'].map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
+              <option value="">
+                {products && products.length > 0
+                  ? '스냅 상품을 선택해 주세요'
+                  : '등록된 상품이 없습니다'}
+              </option>
+              {products && products.length > 0 &&
+                products.map((p) => (
+                  <option key={p.id} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
             </select>
           </div>
 
