@@ -258,7 +258,7 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
               <p className="agreement-text">
                 <strong>작가님의 답변이 도착하는 즉시 알려드릴게요!</strong>
                 <br />
-                HOXY에서 직접 검증한 작가님입니다.
+                <img src="/images/LOGO.png" alt="HOXY" className="inline-logo" />에서 직접 검증한 작가님입니다.
                 <br />
                 취합한 고객님의 개인정보는
                 <br />

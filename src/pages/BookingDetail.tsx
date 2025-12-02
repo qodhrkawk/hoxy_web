@@ -1164,7 +1164,7 @@ export default function BookingDetail() {
 
         <div className="welcome-message">
           <p>
-            <strong>HOXY</strong>에서 검증한 작가님이 직접 응대하고 있습니다.
+            <img src="/images/LOGO.png" alt="HOXY" style={{ height: '1em', verticalAlign: 'middle', marginRight: '2px' }} />에서 검증한 작가님이 직접 응대하고 있습니다.
             <br />
             촬영 서비스의 품질·이행 책임은 전적으로 작가에게 있습니다.
           </p>
