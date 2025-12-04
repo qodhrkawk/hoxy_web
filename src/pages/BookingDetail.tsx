@@ -70,15 +70,12 @@ export default function BookingDetail() {
   useEffect(() => {
     // URL에서 token이 온 경우 서버에서 정보 조회
     if (urlChatId) {
-      console.log('[BookingDetail] token from URL:', urlChatId)
-
       // 이미 검증된 토큰인지 확인
       const verifiedDataStr = localStorage.getItem(`verified_chat_${urlChatId}`)
       let skipVerification = false
       if (verifiedDataStr) {
         try {
           const verifiedData = JSON.parse(verifiedDataStr)
-          console.log('[BookingDetail] ✓ Found verified chat data, skipping verification form')
           skipVerification = true
 
           // chatId와 작가 정보 복원
@@ -96,12 +93,10 @@ export default function BookingDetail() {
 
           // 처음부터 폼 숨기고 채팅 로드 시작
           setShowCustomerInfoForm(false)
-          console.log('[BookingDetail] → Auto-loading chat (already verified)')
           ;(async () => {
             await loadChatMessages()
           })()
         } catch (e) {
-          console.error('[BookingDetail] failed to parse verified data:', e)
         }
       }
 
@@ -109,8 +104,6 @@ export default function BookingDetail() {
         try {
           // 토큰으로 링크 정보 조회
           const linkResponse: any = await networkManager.get(`/v1/chats/links/${urlChatId}`, {}, undefined)
-          console.log('[BookingDetail] ===== Link Response =====')
-          console.log('[BookingDetail] Full response:', JSON.stringify(linkResponse, null, 2))
 
           // response 저장 (나중에 검증에 사용)
           setLinkResponseData(linkResponse)
@@ -119,9 +112,6 @@ export default function BookingDetail() {
           const chatId = linkResponse.chat?.id
           if (chatId) {
             localStorage.setItem('chatId', chatId)
-            console.log('[BookingDetail] ✓ Saved chatId:', chatId)
-          } else {
-            console.warn('[BookingDetail] ✗ No chatId in response')
           }
 
           // 작가 정보 저장
@@ -135,75 +125,34 @@ export default function BookingDetail() {
             }
             localStorage.setItem('artistInfo', JSON.stringify(authorInfo))
             setArtistName(authorInfo.brand_name || authorInfo.name || '작가님')
-            console.log('[BookingDetail] ✓ Saved author info:')
-            console.log('  - ID:', authorInfo.id)
-            console.log('  - Name:', authorInfo.name)
-            console.log('  - Brand Name:', authorInfo.brand_name)
-            console.log('  - Email:', authorInfo.email)
-            console.log('  - Contact Link:', authorInfo.contact_link)
-            console.log('  - Display Name:', authorInfo.brand_name || authorInfo.name)
-          } else {
-            console.warn('[BookingDetail] ✗ No author info in response')
           }
 
           // 채팅 정보 저장
           if (linkResponse.chat) {
             setChatStatus(linkResponse.chat.status || '')
             setChatPhone(linkResponse.chat.phone || '')
-            console.log('[BookingDetail] ✓ Saved chat info:')
-            console.log('  - Status:', linkResponse.chat.status)
-            console.log('  - Product Name:', linkResponse.chat.product_name)
-            console.log('  - Product ID:', linkResponse.chat.product_id)
-            console.log('  - Phone:', linkResponse.chat.phone)
-            console.log('  - Author ID:', linkResponse.chat.author_id)
-            console.log('  - Created At:', linkResponse.chat.created_at)
 
             setChatProductName(linkResponse.chat.product_name || '')
-          } else {
-            console.warn('[BookingDetail] ✗ No chat info in response')
           }
 
           // fixedDate와 reservationTime은 최상위 레벨에 있음
           if (linkResponse.fixedDate) {
             setFixedDate(linkResponse.fixedDate)
-            console.log('[BookingDetail] ✓ Fixed Date:', linkResponse.fixedDate)
           }
           if (linkResponse.reservationTime) {
             setReservationTime(linkResponse.reservationTime)
-            console.log('[BookingDetail] ✓ Reservation Time:', linkResponse.reservationTime)
           }
 
           // 고객 이름 저장
           if (linkResponse.customer_name) {
             setChatCustomerName(linkResponse.customer_name)
-            console.log('[BookingDetail] ✓ Customer name:', linkResponse.customer_name)
-          } else {
-            console.log('[BookingDetail] ✗ No customer name in response')
           }
-
-          // link 정보 로깅
-          if (linkResponse.link) {
-            console.log('[BookingDetail] ✓ Link info:')
-            console.log('  - ID:', linkResponse.link.id)
-            console.log('  - Token:', linkResponse.link.token)
-            console.log('  - Is Active:', linkResponse.link.is_active)
-          }
-
-          // 받은 모든 정보 확인용 로깅
-          console.log('[BookingDetail] ===== All Data Received =====')
-          console.log('Fixed Date:', fixedDate, 'Reservation Time:', reservationTime)
-          console.log('Chat Status:', chatStatus, 'Product:', chatProductName)
-          console.log('Customer:', chatCustomerName, 'Phone:', chatPhone)
 
           // 검증되지 않은 경우만 폼 표시
           if (!skipVerification) {
-            console.log('[BookingDetail] → Showing customer info form')
             setShowCustomerInfoForm(true)
-          } else {
-            console.log('[BookingDetail] → Already loading chat, latest data updated')
           }
         } catch (err) {
-          console.error('[BookingDetail] failed to load link info:', err)
           // 에러 발생 시에도 폼 표시
           setShowCustomerInfoForm(true)
         }
@@ -237,11 +186,9 @@ export default function BookingDetail() {
 
     // 예약 생성 시 저장해 둔 chatId로 메시지 조회
     const storedChatId = localStorage.getItem('chatId')
-    console.log('[BookingDetail] loaded chatId from localStorage:', storedChatId)
 
     // phone number가 없으면 고객 정보 입력 폼 표시
     if (!phoneWithoutHyphens) {
-      console.log('[BookingDetail] no phone number found, showing customer info form')
       setShowCustomerInfoForm(true)
       return
     }
@@ -251,8 +198,6 @@ export default function BookingDetail() {
       ;(async () => {
         await loadChatMessages()
       })()
-    } else {
-      console.warn('[BookingDetail] chatId not found in localStorage')
     }
   }, [urlChatId])
 
@@ -260,8 +205,6 @@ export default function BookingDetail() {
   useEffect(() => {
     const storedChatId = localStorage.getItem('chatId')
     if (!storedChatId) return
-
-    console.log('[BookingDetail] setting up realtime subscription for chatId:', storedChatId)
 
     // messages 테이블의 INSERT 이벤트 구독
     const channel = supabase
@@ -275,7 +218,6 @@ export default function BookingDetail() {
           filter: `chat_id=eq.${storedChatId}`,
         },
         (payload) => {
-          console.log('[BookingDetail] realtime message received:', payload)
           const newMsg = payload.new as any
 
           // 메시지 포맷 변환
@@ -296,9 +238,6 @@ export default function BookingDetail() {
           if ((newMsg.type === 'reservationInquiry' || newMsg.type === 'confirmReservation') && newMsg.content) {
             try {
               parsedContent = typeof newMsg.content === 'string' ? JSON.parse(newMsg.content) : newMsg.content
-              if (newMsg.type === 'confirmReservation') {
-                console.log('[BookingDetail] realtime confirmReservation content:', JSON.stringify(parsedContent, null, 2))
-              }
             } catch {
               parsedContent = null
             }
@@ -316,7 +255,6 @@ export default function BookingDetail() {
           // 이미지 URL 파싱 (실시간)
           let imageUrls: string[] = []
           if (newMsg.media_url) {
-            console.log('[BookingDetail] realtime parsing media_url:', newMsg.media_url, 'type:', typeof newMsg.media_url)
             if (Array.isArray(newMsg.media_url)) {
               // 배열의 각 URL에서 따옴표 제거
               imageUrls = newMsg.media_url.map((url: string) =>
@@ -333,7 +271,6 @@ export default function BookingDetail() {
                     ? parsed.map((url: string) => url.replace(/^["']|["']$/g, '').trim())
                     : [parsed.replace(/^["']|["']$/g, '').trim()]
                 } catch (e) {
-                  console.error('[BookingDetail] realtime failed to parse JSON array:', e)
                   // 파싱 실패 시 따옴표와 대괄호 제거 후 단일 URL로 처리
                   imageUrls = [newMsg.media_url.replace(/^["'\[]|["'\]]$/g, '').trim()]
                 }
@@ -342,12 +279,10 @@ export default function BookingDetail() {
                 imageUrls = [newMsg.media_url.replace(/^["']|["']$/g, '').trim()]
               }
             }
-            console.log('[BookingDetail] realtime parsed imageUrls:', imageUrls)
           }
 
           // 사용자가 보낸 메시지는 이미 낙관적 업데이트로 추가했으므로 무시
           if (newMsg.sender === 'customer') {
-            console.log('[BookingDetail] ignoring customer message from realtime (already added optimistically)')
             return
           }
 
@@ -381,7 +316,6 @@ export default function BookingDetail() {
 
     // 컴포넌트 언마운트 시 구독 해제
     return () => {
-      console.log('[BookingDetail] unsubscribing from realtime channel')
       supabase.removeChannel(channel)
     }
   }, [])
@@ -390,7 +324,6 @@ export default function BookingDetail() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[BookingDetail] page became visible, refreshing messages')
         const storedChatId = localStorage.getItem('chatId')
         if (storedChatId) {
           loadChatMessages()
@@ -414,7 +347,6 @@ export default function BookingDetail() {
       (entries) => {
         const entry = entries[0]
         if (entry.isIntersecting && hasMoreMessages && !isLoadingMore) {
-          console.log('[BookingDetail] top reached, loading more messages')
           loadChatMessages(true)
         }
       },
@@ -508,23 +440,17 @@ export default function BookingDetail() {
         const bookingData = JSON.parse(bookingDataStr)
         phone = bookingData?.phone?.replace(/-/g, '') || ''
       } catch (e) {
-        console.error('[BookingDetail] failed to parse bookingData for read:', e)
         return
       }
     }
 
     if (!phone) {
-      console.error('[BookingDetail] phone number not found for read')
       return
     }
 
     try {
-      console.log('[BookingDetail] 🟢 Sending read request to server - chatId:', storedChatId, 'phone:', phone)
-      const response = await networkManager.post(`/v1/chats/${storedChatId}/read`, { phone }, undefined)
-      console.log('[BookingDetail] 🟢 Read request response:', JSON.stringify(response, null, 2))
-      console.log('[BookingDetail] ✅ Marked messages as read successfully')
+      await networkManager.post(`/v1/chats/${storedChatId}/read`, { phone }, undefined)
     } catch (err) {
-      console.error('[BookingDetail] ❌ Failed to mark messages as read:', err)
     }
   }
 
@@ -555,18 +481,15 @@ export default function BookingDetail() {
         const bookingData = JSON.parse(bookingDataStr)
         phone = bookingData?.phone?.replace(/-/g, '') || ''
       } catch (e) {
-        console.error('[BookingDetail] failed to parse bookingData:', e)
       }
     }
 
     if (!storedChatId) {
-      console.error('[BookingDetail] chatId not found')
       alert('채팅방 정보를 찾을 수 없습니다.')
       return
     }
 
     if (!phone) {
-      console.error('[BookingDetail] phone number not found')
       alert('전화번호 정보를 찾을 수 없습니다.')
       return
     }
@@ -615,8 +538,6 @@ export default function BookingDetail() {
         formData.append('images', files[i])
       }
 
-      console.log('[BookingDetail] uploading images:', files.length, 'files')
-
       // multipart/form-data로 전송
       const response = await fetch(`${networkManager.getBaseURL()}/v1/chats/${storedChatId}/messages/image`, {
         method: 'POST',
@@ -628,7 +549,6 @@ export default function BookingDetail() {
       }
 
       const result = await response.json()
-      console.log('[BookingDetail] image upload response:', JSON.stringify(result, null, 2))
 
       // 업로드 성공: 서버 응답으로 임시 메시지 업데이트
       if (result?.id) {
@@ -680,7 +600,6 @@ export default function BookingDetail() {
         )
       }
     } catch (err) {
-      console.error('[BookingDetail] failed to upload images:', err)
       alert('이미지 전송에 실패했습니다. 다시 시도해 주세요.')
 
       // 실패 시 임시 메시지 제거
@@ -784,20 +703,11 @@ export default function BookingDetail() {
       const serverName = linkResponseData.customer_name || ''
       const serverPhone = linkResponseData.chat?.phone || ''
 
-      console.log('[BookingDetail] Verifying customer info:')
-      console.log('  - Input name:', customerName)
-      console.log('  - Server name:', serverName)
-      console.log('  - Input phone:', phoneDigits)
-      console.log('  - Server phone:', serverPhone)
-
       // 이름과 전화번호 검증
       if (customerName !== serverName || phoneDigits !== serverPhone) {
-        console.log('[BookingDetail] ✗ Verification failed')
         setShowErrorModal(true)
         return
       }
-
-      console.log('[BookingDetail] ✓ Verification successful')
 
       // 검증 성공 시 verified 데이터 저장
       const verifiedData = {
@@ -830,7 +740,6 @@ export default function BookingDetail() {
         verifiedAt: new Date().toISOString(),
       }
       localStorage.setItem(`verified_chat_${urlChatId}`, JSON.stringify(verifiedData))
-      console.log('[BookingDetail] ✓ Saved verified chat data for token:', urlChatId)
     }
 
     // localStorage에 저장
@@ -862,7 +771,6 @@ export default function BookingDetail() {
   const loadChatMessages = async (loadMore = false) => {
     const storedChatId = localStorage.getItem('chatId')
     if (!storedChatId) {
-      console.error('[BookingDetail] chatId not found')
       return
     }
 
@@ -873,23 +781,19 @@ export default function BookingDetail() {
         const bookingData = JSON.parse(bookingDataStr)
         phoneWithoutHyphens = bookingData?.phone?.replace(/-/g, '') || ''
       } catch (e) {
-        console.error('[BookingDetail] failed to parse bookingData:', e)
         return
       }
     }
 
     if (!phoneWithoutHyphens) {
-      console.error('[BookingDetail] phone number not found')
       return
     }
 
     if (loadMore && isLoadingMore) {
-      console.log('[BookingDetail] already loading more messages')
       return
     }
 
     if (loadMore && !hasMoreMessages) {
-      console.log('[BookingDetail] no more messages to load')
       return
     }
 
@@ -903,7 +807,6 @@ export default function BookingDetail() {
         const remainingMessages = totalMessages - currentDisplayed
 
         if (remainingMessages <= 0) {
-          console.log('[BookingDetail] no more messages to display')
           setHasMoreMessages(false)
           setIsLoadingMore(false)
           return
@@ -913,8 +816,6 @@ export default function BookingDetail() {
         const loadCount = Math.min(20, remainingMessages)
         const startIndex = totalMessages - currentDisplayed - loadCount
         const previousMessages = allMessages.current.slice(startIndex, totalMessages - currentDisplayed)
-
-        console.log('[BookingDetail] loading more messages from client cache:', loadCount, 'messages')
 
         // 기존 메시지 앞에 추가
         setMessages((prev) => [...previousMessages, ...prev])
@@ -934,9 +835,7 @@ export default function BookingDetail() {
         phone: phoneWithoutHyphens
       }
 
-      console.log('[BookingDetail] fetching all messages for chatId:', storedChatId, 'with params:', JSON.stringify(params, null, 2))
       const res: any = await networkManager.get(`/v1/chats/${storedChatId}/messages`, params, undefined)
-      console.log('[BookingDetail] messages response:', JSON.stringify(res, null, 2))
       const apiMessages: any[] = Array.isArray(res?.messages) ? res.messages : []
 
       // timestamp 기준으로 정렬 (오래된 것부터)
@@ -965,9 +864,6 @@ export default function BookingDetail() {
         if ((m.type === 'reservationInquiry' || m.type === 'confirmReservation') && m.content) {
           try {
             parsedContent = typeof m.content === 'string' ? JSON.parse(m.content) : m.content
-            if (m.type === 'confirmReservation') {
-              console.log('[BookingDetail] confirmReservation content:', JSON.stringify(parsedContent, null, 2))
-            }
           } catch {
             parsedContent = null
           }
@@ -985,7 +881,6 @@ export default function BookingDetail() {
         // 이미지 URL 파싱
         let imageUrls: string[] = []
         if (m.media_url) {
-          console.log('[BookingDetail] parsing media_url:', m.media_url, 'type:', typeof m.media_url)
           if (Array.isArray(m.media_url)) {
             // 배열의 각 URL에서 따옴표 제거
             imageUrls = m.media_url.map((url: string) =>
@@ -1000,7 +895,6 @@ export default function BookingDetail() {
                   ? parsed.map((url: string) => url.replace(/^["']|["']$/g, '').trim())
                   : [parsed.replace(/^["']|["']$/g, '').trim()]
               } catch (e) {
-                console.error('[BookingDetail] failed to parse JSON array:', e)
                 // 파싱 실패 시 따옴표와 대괄호 제거 후 단일 URL로 처리
                 imageUrls = [m.media_url.replace(/^["'\[]|["'\]]$/g, '').trim()]
               }
@@ -1009,7 +903,6 @@ export default function BookingDetail() {
               imageUrls = [m.media_url.replace(/^["']|["']$/g, '').trim()]
             }
           }
-          console.log('[BookingDetail] parsed imageUrls:', imageUrls)
         }
 
         return {
@@ -1024,7 +917,6 @@ export default function BookingDetail() {
           dateString,
         }
       })
-      console.log('[BookingDetail] mapped messages:', mapped.length, 'messages (initial load)')
 
       // 전체 메시지 저장
       allMessages.current = mapped
@@ -1034,8 +926,6 @@ export default function BookingDetail() {
       const initialMessages = mapped.slice(-initialDisplayCount)
       setMessages(initialMessages)
       displayedCount.current = initialDisplayCount
-
-      console.log('[BookingDetail] displaying', initialDisplayCount, 'of', mapped.length, 'messages')
 
       // 더 표시할 메시지가 있는지 확인
       if (mapped.length <= 20) {
@@ -1053,7 +943,6 @@ export default function BookingDetail() {
       // 초기 메시지 로드 완료 표시 (IntersectionObserver 활성화)
       setIsInitialMessagesLoaded(true)
     } catch (err) {
-      console.error('[BookingDetail] failed to load chat messages:', err)
     }
   }
 
@@ -1062,7 +951,6 @@ export default function BookingDetail() {
 
     // 이미 전송 중이면 무시 (race condition 방지)
     if (isSendingMessage) {
-      console.log('[BookingDetail] message sending in progress, ignoring')
       return
     }
 
@@ -1095,17 +983,14 @@ export default function BookingDetail() {
         const bookingData = JSON.parse(bookingDataStr)
         phone = bookingData?.phone?.replace(/-/g, '') || ''
       } catch (e) {
-        console.error('[BookingDetail] failed to parse bookingData:', e)
       }
     }
 
     if (!storedChatId) {
-      console.error('[BookingDetail] chatId not found')
       return
     }
 
     if (!phone) {
-      console.error('[BookingDetail] phone number not found')
       alert('전화번호 정보를 찾을 수 없습니다.')
       return
     }
@@ -1124,9 +1009,7 @@ export default function BookingDetail() {
         body.phone = phone
       }
 
-      console.log('[BookingDetail] sending message:', body)
       const response: any = await networkManager.post(`/v1/chats/${storedChatId}/messages`, body, undefined)
-      console.log('[BookingDetail] message sent response:', JSON.stringify(response, null, 2))
 
       // 서버 응답으로 메시지 ID 업데이트 (필요시)
       if (response?.id) {
@@ -1135,7 +1018,6 @@ export default function BookingDetail() {
         )
       }
     } catch (err) {
-      console.error('[BookingDetail] failed to send message:', err)
       // 실패 시 로컬 메시지 제거 또는 에러 표시
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       alert('메시지 전송에 실패했습니다. 다시 시도해 주세요.')

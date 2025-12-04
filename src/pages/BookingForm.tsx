@@ -73,66 +73,46 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
 
     try {
       const response: any = await networkManager.post('/v1/reservations', body)
-      console.log('[BookingForm] reservation created - full response:', JSON.stringify(response, null, 2))
 
       // 응답에서 chat id 추출: response.chat.id 또는 response.reservation.chat_id
       const chatId: string | undefined = response?.chat?.id || response?.reservation?.chat_id
-      console.log('[BookingForm] extracted chatId:', chatId, 'from chat.id:', response?.chat?.id, 'or reservation.chat_id:', response?.reservation?.chat_id)
 
       if (chatId) {
         localStorage.setItem('chatId', chatId)
-        console.log('[BookingForm] chatId saved to localStorage:', chatId)
 
         // chat 전체 정보 저장 (status, product_name, phone 등)
         if (response.chat) {
           localStorage.setItem('chatInfo', JSON.stringify(response.chat))
-          console.log('[BookingForm] chat info saved to localStorage:', JSON.stringify(response.chat, null, 2))
         }
 
         // author 정보 저장
         if (response.author) {
           localStorage.setItem('artistInfo', JSON.stringify(response.author))
-          console.log('[BookingForm] author info saved to localStorage:', JSON.stringify(response.author, null, 2))
         }
 
         // customer_name 저장
         if (response.customer_name) {
           localStorage.setItem('customerName', response.customer_name)
-          console.log('[BookingForm] customer name saved to localStorage:', response.customer_name)
         }
 
         // 예약 응답에서 토큰 추출 (token, access_token, reservation_token 등 가능한 필드 확인)
         const token = response?.token || response?.access_token || response?.reservation_token
         if (token) {
           localStorage.setItem('reservationToken', token)
-          console.log('[BookingForm] reservation token saved from response:', token ? 'present' : 'missing')
-        } else {
-          console.warn('[BookingForm] no token found in reservation response. Available keys:', Object.keys(response || {}))
         }
 
         // 예약 시간 추출 및 저장
         const reservationTime = response?.reservation?.reservation_time || response?.reservation_time || response?.reservationTime
         if (reservationTime) {
           localStorage.setItem('reservationTime', reservationTime)
-          console.log('[BookingForm] reservationTime saved to localStorage:', reservationTime)
-        } else {
-          console.warn('[BookingForm] no reservationTime found in response')
         }
       } else {
-        console.error('[BookingForm] chatId not found in response. Response structure:', {
-          hasChat: !!response?.chat,
-          chatId: response?.chat?.id,
-          hasReservation: !!response?.reservation,
-          reservationChatId: response?.reservation?.chat_id,
-          fullResponse: response,
-        })
         alert('예약은 생성되었지만 채팅방 정보를 찾을 수 없습니다. 관리자에게 문의해 주세요.')
         setIsSubmitting(false)
         return
       }
     } catch (err: any) {
       // 네트워크 실패 시에도 사용자 경험 유지
-      console.error('[BookingForm] reservation create error:', err)
       alert('예약 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
       setIsSubmitting(false)
       return // 에러 발생 시 네비게이션 중단
