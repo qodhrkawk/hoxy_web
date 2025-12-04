@@ -93,6 +93,13 @@ export default function BookingDetail() {
             localStorage.setItem('bookingData', JSON.stringify(verifiedData.bookingData))
             setBookingData(verifiedData.bookingData)
           }
+
+          // 처음부터 폼 숨기고 채팅 로드 시작
+          setShowCustomerInfoForm(false)
+          console.log('[BookingDetail] → Auto-loading chat (already verified)')
+          ;(async () => {
+            await loadChatMessages()
+          })()
         } catch (e) {
           console.error('[BookingDetail] failed to parse verified data:', e)
         }
@@ -188,15 +195,12 @@ export default function BookingDetail() {
           console.log('Chat Status:', chatStatus, 'Product:', chatProductName)
           console.log('Customer:', chatCustomerName, 'Phone:', chatPhone)
 
-          // 이미 검증된 경우 폼 건너뛰고 바로 채팅 로드
-          if (skipVerification) {
-            console.log('[BookingDetail] → Auto-loading chat (already verified)')
-            setShowCustomerInfoForm(false)
-            await loadChatMessages()
-          } else {
-            // 고객 정보 입력 폼 표시
+          // 검증되지 않은 경우만 폼 표시
+          if (!skipVerification) {
             console.log('[BookingDetail] → Showing customer info form')
             setShowCustomerInfoForm(true)
+          } else {
+            console.log('[BookingDetail] → Already loading chat, latest data updated')
           }
         } catch (err) {
           console.error('[BookingDetail] failed to load link info:', err)
