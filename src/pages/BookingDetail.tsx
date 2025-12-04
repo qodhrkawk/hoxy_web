@@ -1205,7 +1205,7 @@ export default function BookingDetail() {
     <div className="chat-container">
       <h1 className="chat-header">{artistName}</h1>
       <div className="chat-content">
-        {chatStatus === 'confirmed' && (
+        {(fixedDate && chatProductName) && (
           <div className="reservation-details-container">
             <button
               className="reservation-details-header"
