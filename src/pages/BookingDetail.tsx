@@ -1161,9 +1161,8 @@ export default function BookingDetail() {
 
   return (
     <div className="chat-container">
+      <h1 className="chat-header">{artistName}</h1>
       <div className="chat-content">
-        <h1 className="chat-header">{artistName}</h1>
-
         <div className="welcome-message">
           <p>
             <img src="/images/LOGO.png" alt="HOXY" style={{ height: '0.9em', verticalAlign: 'middle', marginRight: '2px' }} />에서 검증한 작가님이 직접 응대하고 있습니다.
