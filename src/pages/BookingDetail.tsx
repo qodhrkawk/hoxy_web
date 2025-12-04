@@ -91,6 +91,22 @@ export default function BookingDetail() {
             localStorage.setItem('bookingData', JSON.stringify(verifiedData.bookingData))
             setBookingData(verifiedData.bookingData)
           }
+          // chat 정보 복원
+          if (verifiedData.chatInfo) {
+            setChatStatus(verifiedData.chatInfo.status || '')
+            setChatProductName(verifiedData.chatInfo.product_name || '')
+            setChatPhone(verifiedData.chatInfo.phone || '')
+            console.log('[BookingDetail] ✓ Restored chat info from verified data')
+          }
+          if (verifiedData.customerName) {
+            setChatCustomerName(verifiedData.customerName)
+          }
+          if (verifiedData.fixedDate) {
+            setFixedDate(verifiedData.fixedDate)
+          }
+          if (verifiedData.reservationTime) {
+            setReservationTime(verifiedData.reservationTime)
+          }
 
           // 바로 채팅 로드
           console.log('[BookingDetail] → Auto-loading chat (already verified)')
@@ -820,7 +836,18 @@ export default function BookingDetail() {
           name: linkResponseData.author?.name,
           brand_name: linkResponseData.author?.brand_name,
           email: linkResponseData.author?.email,
+          contact_link: linkResponseData.author?.contact_link,
         },
+        chatInfo: {
+          status: linkResponseData.chat?.status,
+          product_name: chatProductName, // 이미 product_id로 조회된 값 사용
+          phone: linkResponseData.chat?.phone,
+          author_id: linkResponseData.chat?.author_id,
+          created_at: linkResponseData.chat?.created_at,
+        },
+        customerName: linkResponseData.customer_name,
+        fixedDate: linkResponseData.fixedDate,
+        reservationTime: linkResponseData.reservationTime,
         bookingData: {
           name: customerName,
           phone: customerPhone,
