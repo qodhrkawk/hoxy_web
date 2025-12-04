@@ -53,6 +53,13 @@ export default function BookingDetail() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [isInitialMessagesLoaded, setIsInitialMessagesLoaded] = useState(false)
+  const [chatStatus, setChatStatus] = useState<string>('')
+  const [chatProductName, setChatProductName] = useState<string>('')
+  const [chatPhone, setChatPhone] = useState<string>('')
+  const [chatCustomerName, setChatCustomerName] = useState<string>('')
+  const [fixedDate, setFixedDate] = useState<string>('')
+  // const [reservationTime, setReservationTime] = useState<string>('') // 서버에서 추가될 예정
+  const [isReservationDetailsOpen, setIsReservationDetailsOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isInitialLoad = useRef(true)
@@ -124,6 +131,7 @@ export default function BookingDetail() {
               name: linkResponse.author.name,
               brand_name: linkResponse.author.brand_name,
               email: linkResponse.author.email,
+              contact_link: linkResponse.author.contact_link,
             }
             localStorage.setItem('artistInfo', JSON.stringify(authorInfo))
             setArtistName(authorInfo.brand_name || authorInfo.name || '작가님')
@@ -132,21 +140,33 @@ export default function BookingDetail() {
             console.log('  - Name:', authorInfo.name)
             console.log('  - Brand Name:', authorInfo.brand_name)
             console.log('  - Email:', authorInfo.email)
+            console.log('  - Contact Link:', authorInfo.contact_link)
             console.log('  - Display Name:', authorInfo.brand_name || authorInfo.name)
           } else {
             console.warn('[BookingDetail] ✗ No author info in response')
           }
 
-          // 전화번호 정보 로깅
-          if (linkResponse.chat?.phone) {
-            console.log('[BookingDetail] ✓ Phone number exists in response:', linkResponse.chat.phone)
+          // 채팅 정보 저장
+          if (linkResponse.chat) {
+            setChatStatus(linkResponse.chat.status || '')
+            setChatProductName(linkResponse.chat.product_name || '')
+            setChatPhone(linkResponse.chat.phone || '')
+            setFixedDate(linkResponse.chat.fixed_date || '')
+            // setReservationTime(linkResponse.chat.reservation_time || '') // 서버에서 추가될 예정
+            console.log('[BookingDetail] ✓ Saved chat info:')
+            console.log('  - Status:', linkResponse.chat.status)
+            console.log('  - Product Name:', linkResponse.chat.product_name)
+            console.log('  - Phone:', linkResponse.chat.phone)
+            console.log('  - Fixed Date:', linkResponse.chat.fixed_date)
+            console.log('  - Reservation Time:', linkResponse.chat.reservation_time)
           } else {
-            console.log('[BookingDetail] ✗ No phone number in response')
+            console.warn('[BookingDetail] ✗ No chat info in response')
           }
 
-          // 고객 이름 정보 로깅
+          // 고객 이름 저장
           if (linkResponse.customer_name) {
-            console.log('[BookingDetail] ✓ Customer name exists in response:', linkResponse.customer_name)
+            setChatCustomerName(linkResponse.customer_name)
+            console.log('[BookingDetail] ✓ Customer name:', linkResponse.customer_name)
           } else {
             console.log('[BookingDetail] ✗ No customer name in response')
           }
@@ -1163,6 +1183,62 @@ export default function BookingDetail() {
     <div className="chat-container">
       <h1 className="chat-header">{artistName}</h1>
       <div className="chat-content">
+        {chatStatus === 'confirmed' && (
+          <div className="reservation-details-container">
+            <button
+              className="reservation-details-header"
+              onClick={() => setIsReservationDetailsOpen(!isReservationDetailsOpen)}
+            >
+              <div className="reservation-details-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                <span>예약 내용 보기</span>
+              </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                style={{ transform: isReservationDetailsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+              >
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {isReservationDetailsOpen && (
+              <div className="reservation-details-content">
+                <div className="reservation-detail-row">
+                  <span className="detail-label">스냅 상품</span>
+                  <span className="detail-value">{chatProductName || '-'}</span>
+                </div>
+                <div className="reservation-detail-row">
+                  <span className="detail-label">촬영 날짜</span>
+                  <span className="detail-value">
+                    {fixedDate ? (() => {
+                      const [year, month, day] = fixedDate.split('-').map(Number)
+                      const date = new Date(year, month - 1, day)
+                      const days = ['일', '월', '화', '수', '목', '금', '토']
+                      const dayName = days[date.getDay()]
+                      return `${year}. ${month}. ${day}(${dayName})`
+                    })() : '-'}
+                  </span>
+                </div>
+                <div className="reservation-detail-row">
+                  <span className="detail-label">이름</span>
+                  <span className="detail-value">{chatCustomerName || '-'}</span>
+                </div>
+                <div className="reservation-detail-row">
+                  <span className="detail-label">휴대폰 번호</span>
+                  <span className="detail-value">
+                    {chatPhone ? chatPhone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : '-'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="welcome-message">
           <p>
             <img src="/images/LOGO.png" alt="HOXY" style={{ height: '0.9em', verticalAlign: 'middle', marginRight: '2px' }} />에서 검증한 작가님이 직접 응대하고 있습니다.

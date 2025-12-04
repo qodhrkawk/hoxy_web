@@ -220,6 +220,75 @@
   overflow-y: auto;
 }
 
+.reservation-details-container {
+  background: white;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.reservation-details-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.reservation-details-header:active {
+  background: #F8F8F8;
+}
+
+.reservation-details-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+}
+
+.reservation-details-title svg {
+  flex-shrink: 0;
+}
+
+.reservation-details-content {
+  padding: 0 20px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reservation-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.reservation-detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 14px;
+  font-weight: 400;
+  color: #999;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+  text-align: right;
+}
+
 .welcome-message {
   background: #F0F0F0;
   border-radius: 12px;
