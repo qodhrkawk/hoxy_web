@@ -83,6 +83,24 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
         localStorage.setItem('chatId', chatId)
         console.log('[BookingForm] chatId saved to localStorage:', chatId)
 
+        // chat 전체 정보 저장 (status, product_name, phone 등)
+        if (response.chat) {
+          localStorage.setItem('chatInfo', JSON.stringify(response.chat))
+          console.log('[BookingForm] chat info saved to localStorage:', JSON.stringify(response.chat, null, 2))
+        }
+
+        // author 정보 저장
+        if (response.author) {
+          localStorage.setItem('artistInfo', JSON.stringify(response.author))
+          console.log('[BookingForm] author info saved to localStorage:', JSON.stringify(response.author, null, 2))
+        }
+
+        // customer_name 저장
+        if (response.customer_name) {
+          localStorage.setItem('customerName', response.customer_name)
+          console.log('[BookingForm] customer name saved to localStorage:', response.customer_name)
+        }
+
         // 예약 응답에서 토큰 추출 (token, access_token, reservation_token 등 가능한 필드 확인)
         const token = response?.token || response?.access_token || response?.reservation_token
         if (token) {

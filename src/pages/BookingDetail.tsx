@@ -58,7 +58,7 @@ export default function BookingDetail() {
   const [chatPhone, setChatPhone] = useState<string>('')
   const [chatCustomerName, setChatCustomerName] = useState<string>('')
   const [fixedDate, setFixedDate] = useState<string>('')
-  // const [reservationTime, setReservationTime] = useState<string>('') // 서버에서 추가될 예정
+  const [reservationTime, setReservationTime] = useState<string>('')
   const [isReservationDetailsOpen, setIsReservationDetailsOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -151,16 +151,24 @@ export default function BookingDetail() {
             setChatStatus(linkResponse.chat.status || '')
             setChatProductName(linkResponse.chat.product_name || '')
             setChatPhone(linkResponse.chat.phone || '')
-            setFixedDate(linkResponse.chat.fixed_date || '')
-            // setReservationTime(linkResponse.chat.reservation_time || '') // 서버에서 추가될 예정
             console.log('[BookingDetail] ✓ Saved chat info:')
             console.log('  - Status:', linkResponse.chat.status)
             console.log('  - Product Name:', linkResponse.chat.product_name)
             console.log('  - Phone:', linkResponse.chat.phone)
-            console.log('  - Fixed Date:', linkResponse.chat.fixed_date)
-            console.log('  - Reservation Time:', linkResponse.chat.reservation_time)
+            console.log('  - Author ID:', linkResponse.chat.author_id)
+            console.log('  - Created At:', linkResponse.chat.created_at)
           } else {
             console.warn('[BookingDetail] ✗ No chat info in response')
+          }
+
+          // fixedDate와 reservationTime은 최상위 레벨에 있음
+          if (linkResponse.fixedDate) {
+            setFixedDate(linkResponse.fixedDate)
+            console.log('[BookingDetail] ✓ Fixed Date:', linkResponse.fixedDate)
+          }
+          if (linkResponse.reservationTime) {
+            setReservationTime(linkResponse.reservationTime)
+            console.log('[BookingDetail] ✓ Reservation Time:', linkResponse.reservationTime)
           }
 
           // 고객 이름 저장
@@ -170,6 +178,20 @@ export default function BookingDetail() {
           } else {
             console.log('[BookingDetail] ✗ No customer name in response')
           }
+
+          // link 정보 로깅
+          if (linkResponse.link) {
+            console.log('[BookingDetail] ✓ Link info:')
+            console.log('  - ID:', linkResponse.link.id)
+            console.log('  - Token:', linkResponse.link.token)
+            console.log('  - Is Active:', linkResponse.link.is_active)
+          }
+
+          // 받은 모든 정보 확인용 로깅
+          console.log('[BookingDetail] ===== All Data Received =====')
+          console.log('Fixed Date:', fixedDate, 'Reservation Time:', reservationTime)
+          console.log('Chat Status:', chatStatus, 'Product:', chatProductName)
+          console.log('Customer:', chatCustomerName, 'Phone:', chatPhone)
 
           // 고객 정보 입력 폼 표시
           console.log('[BookingDetail] → Showing customer info form')
