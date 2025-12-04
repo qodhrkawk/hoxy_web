@@ -203,15 +203,18 @@
   right: 0;
   background: white;
   z-index: 100;
-  padding: 20px;
+  height: 60px;
+  line-height: 60px;
+  padding: 0 20px;
   border-bottom: 1px solid #F0F0F0;
   max-width: 480px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .reservation-details-container {
   position: fixed;
-  top: 61px;
+  top: 60px;
   left: 0;
   right: 0;
   background: #FCFCFC;
@@ -234,11 +237,11 @@
 }
 
 .chat-content.with-reservation-details {
-  padding-top: 136px;
+  padding-top: 135px;
 }
 
 .chat-content.reservation-open {
-  padding-top: 300px;
+  padding-top: 260px;
 }
 
 .reservation-details-header {
