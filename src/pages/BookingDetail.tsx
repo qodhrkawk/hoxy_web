@@ -1221,60 +1221,59 @@ export default function BookingDetail() {
   return (
     <div className="chat-container">
       <h1 className="chat-header">{artistName}</h1>
-      <div className="chat-content">
-        {fixedDate && (
-          <div className="reservation-details-container">
-            <button
-              className="reservation-details-header"
-              onClick={() => setIsReservationDetailsOpen(!isReservationDetailsOpen)}
+      {fixedDate && (
+        <div className="reservation-details-container">
+          <button
+            className="reservation-details-header"
+            onClick={() => setIsReservationDetailsOpen(!isReservationDetailsOpen)}
+          >
+            <div className="reservation-details-title">
+              <img src="/images/checkmark.png" alt="checkmark" className="checkmark-icon" />
+              <span>예약 내용 보기</span>
+            </div>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              style={{ transform: isReservationDetailsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
             >
-              <div className="reservation-details-title">
-                <img src="/images/checkmark.png" alt="checkmark" className="checkmark-icon" />
-                <span>예약 내용 보기</span>
+              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          {isReservationDetailsOpen && (
+            <div className="reservation-details-content">
+              <div className="reservation-detail-row">
+                <span className="detail-label">스냅 상품</span>
+                <span className="detail-value">{chatProductName || '-'}</span>
               </div>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                style={{ transform: isReservationDetailsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
-              >
-                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            {isReservationDetailsOpen && (
-              <div className="reservation-details-content">
-                <div className="reservation-detail-row">
-                  <span className="detail-label">스냅 상품</span>
-                  <span className="detail-value">{chatProductName || '-'}</span>
-                </div>
-                <div className="reservation-detail-row">
-                  <span className="detail-label">촬영 날짜</span>
-                  <span className="detail-value">
-                    {fixedDate ? (() => {
-                      const [year, month, day] = fixedDate.split('-').map(Number)
-                      const date = new Date(year, month - 1, day)
-                      const days = ['일', '월', '화', '수', '목', '금', '토']
-                      const dayName = days[date.getDay()]
-                      return `${year}. ${month}. ${day}(${dayName})`
-                    })() : '-'}
-                  </span>
-                </div>
-                <div className="reservation-detail-row">
-                  <span className="detail-label">이름</span>
-                  <span className="detail-value">{chatCustomerName || '-'}</span>
-                </div>
-                <div className="reservation-detail-row">
-                  <span className="detail-label">휴대폰 번호</span>
-                  <span className="detail-value">
-                    {chatPhone ? chatPhone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : '-'}
-                  </span>
-                </div>
+              <div className="reservation-detail-row">
+                <span className="detail-label">촬영 날짜</span>
+                <span className="detail-value">
+                  {fixedDate ? (() => {
+                    const [year, month, day] = fixedDate.split('-').map(Number)
+                    const date = new Date(year, month - 1, day)
+                    const days = ['일', '월', '화', '수', '목', '금', '토']
+                    const dayName = days[date.getDay()]
+                    return `${year}. ${month}. ${day}(${dayName})`
+                  })() : '-'}
+                </span>
               </div>
-            )}
-          </div>
-        )}
-
+              <div className="reservation-detail-row">
+                <span className="detail-label">이름</span>
+                <span className="detail-value">{chatCustomerName || '-'}</span>
+              </div>
+              <div className="reservation-detail-row">
+                <span className="detail-label">휴대폰 번호</span>
+                <span className="detail-value">
+                  {chatPhone ? chatPhone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : '-'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      <div className={`chat-content ${fixedDate ? 'with-reservation-details' : ''} ${isReservationDetailsOpen ? 'reservation-open' : ''}`}>
         <div className="welcome-message">
           <p>
             <img src="/images/LOGO.png" alt="HOXY" style={{ height: '0.9em', verticalAlign: 'middle', marginRight: '2px' }} />에서 검증한 작가님이 직접 응대하고 있습니다.
