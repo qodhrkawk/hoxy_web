@@ -266,6 +266,12 @@
   font-weight: 500;
   color: #000;
   line-height: 1;
+  height: 100%;
+}
+
+.reservation-details-title span {
+  display: block;
+  line-height: 1;
 }
 
 .checkmark-icon {
@@ -284,7 +290,7 @@
   background: #FCFCFC;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .reservation-detail-row {

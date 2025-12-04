@@ -1251,8 +1251,10 @@ export default function BookingDetail() {
                 <span className="detail-label">촬영 날짜</span>
                 <span className="detail-value">
                   {fixedDate ? (() => {
-                    const [year, month, day] = fixedDate.split('-').map(Number)
-                    const date = new Date(year, month - 1, day)
+                    const date = new Date(fixedDate)
+                    const year = date.getFullYear()
+                    const month = date.getMonth() + 1
+                    const day = date.getDate()
                     const days = ['일', '월', '화', '수', '목', '금', '토']
                     const dayName = days[date.getDay()]
                     return `${year}. ${month}. ${day}(${dayName})`
