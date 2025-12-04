@@ -128,24 +128,7 @@ export default function BookingDetail() {
             console.log('  - Author ID:', linkResponse.chat.author_id)
             console.log('  - Created At:', linkResponse.chat.created_at)
 
-            // product_name이 없고 product_id가 있으면 상품 정보 조회
-            if (!linkResponse.chat.product_name && linkResponse.chat.product_id) {
-              console.log('[BookingDetail] → Fetching product info for product_id:', linkResponse.chat.product_id)
-              ;(async () => {
-                try {
-                  const productResponse: any = await networkManager.get(`/v1/products/${linkResponse.chat.product_id}`, {}, undefined)
-                  console.log('[BookingDetail] ✓ Product info fetched:', JSON.stringify(productResponse, null, 2))
-                  if (productResponse?.name) {
-                    setChatProductName(productResponse.name)
-                    console.log('[BookingDetail] ✓ Product name set to:', productResponse.name)
-                  }
-                } catch (err) {
-                  console.error('[BookingDetail] ✗ Failed to fetch product info:', err)
-                }
-              })()
-            } else {
-              setChatProductName(linkResponse.chat.product_name || '')
-            }
+            setChatProductName(linkResponse.chat.product_name || '')
           } else {
             console.warn('[BookingDetail] ✗ No chat info in response')
           }
