@@ -72,8 +72,31 @@ export default function BookingDetail() {
     if (urlChatId) {
       console.log('[BookingDetail] token from URL:', urlChatId)
 
-      // 새로고침 시에도 항상 서버에서 최신 데이터 가져오기
-      console.log('[BookingDetail] → Fetching latest data from server for token:', urlChatId)
+      // 이미 검증된 토큰인지 확인
+      const verifiedDataStr = localStorage.getItem(`verified_chat_${urlChatId}`)
+      let skipVerification = false
+      if (verifiedDataStr) {
+        try {
+          const verifiedData = JSON.parse(verifiedDataStr)
+          console.log('[BookingDetail] ✓ Found verified chat data, skipping verification form')
+          skipVerification = true
+
+          // chatId와 작가 정보 복원
+          if (verifiedData.chatId) {
+            localStorage.setItem('chatId', verifiedData.chatId)
+          }
+          if (verifiedData.artistInfo) {
+            localStorage.setItem('artistInfo', JSON.stringify(verifiedData.artistInfo))
+            setArtistName(verifiedData.artistInfo.brand_name || verifiedData.artistInfo.name || '작가님')
+          }
+          if (verifiedData.bookingData) {
+            localStorage.setItem('bookingData', JSON.stringify(verifiedData.bookingData))
+            setBookingData(verifiedData.bookingData)
+          }
+        } catch (e) {
+          console.error('[BookingDetail] failed to parse verified data:', e)
+        }
+      }
 
       ;(async () => {
         try {
@@ -165,9 +188,16 @@ export default function BookingDetail() {
           console.log('Chat Status:', chatStatus, 'Product:', chatProductName)
           console.log('Customer:', chatCustomerName, 'Phone:', chatPhone)
 
-          // 고객 정보 입력 폼 표시
-          console.log('[BookingDetail] → Showing customer info form')
-          setShowCustomerInfoForm(true)
+          // 이미 검증된 경우 폼 건너뛰고 바로 채팅 로드
+          if (skipVerification) {
+            console.log('[BookingDetail] → Auto-loading chat (already verified)')
+            setShowCustomerInfoForm(false)
+            await loadChatMessages()
+          } else {
+            // 고객 정보 입력 폼 표시
+            console.log('[BookingDetail] → Showing customer info form')
+            setShowCustomerInfoForm(true)
+          }
         } catch (err) {
           console.error('[BookingDetail] failed to load link info:', err)
           // 에러 발생 시에도 폼 표시
