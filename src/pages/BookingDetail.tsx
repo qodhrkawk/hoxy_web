@@ -72,54 +72,8 @@ export default function BookingDetail() {
     if (urlChatId) {
       console.log('[BookingDetail] token from URL:', urlChatId)
 
-      // 이미 검증된 토큰인지 확인
-      const verifiedDataStr = localStorage.getItem(`verified_chat_${urlChatId}`)
-      if (verifiedDataStr) {
-        try {
-          const verifiedData = JSON.parse(verifiedDataStr)
-          console.log('[BookingDetail] ✓ Found verified chat data:', verifiedData)
-
-          // chatId와 작가 정보 복원
-          if (verifiedData.chatId) {
-            localStorage.setItem('chatId', verifiedData.chatId)
-          }
-          if (verifiedData.artistInfo) {
-            localStorage.setItem('artistInfo', JSON.stringify(verifiedData.artistInfo))
-            setArtistName(verifiedData.artistInfo.brand_name || verifiedData.artistInfo.name || '작가님')
-          }
-          if (verifiedData.bookingData) {
-            localStorage.setItem('bookingData', JSON.stringify(verifiedData.bookingData))
-            setBookingData(verifiedData.bookingData)
-          }
-          // chat 정보 복원
-          if (verifiedData.chatInfo) {
-            setChatStatus(verifiedData.chatInfo.status || '')
-            setChatProductName(verifiedData.chatInfo.product_name || '')
-            setChatPhone(verifiedData.chatInfo.phone || '')
-            console.log('[BookingDetail] ✓ Restored chat info from verified data')
-          }
-          if (verifiedData.customerName) {
-            setChatCustomerName(verifiedData.customerName)
-          }
-          if (verifiedData.fixedDate) {
-            setFixedDate(verifiedData.fixedDate)
-          }
-          if (verifiedData.reservationTime) {
-            setReservationTime(verifiedData.reservationTime)
-          }
-
-          // 바로 채팅 로드
-          console.log('[BookingDetail] → Auto-loading chat (already verified)')
-          setShowCustomerInfoForm(false)
-          ;(async () => {
-            await loadChatMessages()
-          })()
-          return
-        } catch (e) {
-          console.error('[BookingDetail] failed to parse verified data:', e)
-          // 파싱 실패 시 계속 진행 (아래 API 호출)
-        }
-      }
+      // 새로고침 시에도 항상 서버에서 최신 데이터 가져오기
+      console.log('[BookingDetail] → Fetching latest data from server for token:', urlChatId)
 
       ;(async () => {
         try {
