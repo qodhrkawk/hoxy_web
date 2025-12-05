@@ -1145,7 +1145,17 @@ export default function BookingDetail() {
               {reservationTime && (
                 <div className="reservation-detail-row">
                   <span className="detail-label">촬영 시간</span>
-                  <span className="detail-value">{reservationTime}</span>
+                  <span className="detail-value">
+                    {(() => {
+                      const date = new Date(reservationTime)
+                      const hours = date.getHours()
+                      const minutes = date.getMinutes()
+                      const period = hours >= 12 ? '오후' : '오전'
+                      const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+                      const displayMinutes = minutes.toString().padStart(2, '0')
+                      return `${period} ${displayHours}:${displayMinutes}`
+                    })()}
+                  </span>
                 </div>
               )}
               <div className="reservation-detail-row">
