@@ -389,6 +389,16 @@ export default function BookingDetail() {
     }
   }, [messages])
 
+  // fixedDate가 설정되면 드롭다운이 나타나므로 레이아웃 조정 후 스크롤
+  useEffect(() => {
+    if (fixedDate && messages.length > 0) {
+      // 레이아웃 변경 후 스크롤 (약간의 딜레이)
+      setTimeout(() => {
+        scrollToBottom('auto')
+      }, 100)
+    }
+  }, [fixedDate])
+
   const getCurrentTime = () => {
     const now = new Date()
     const hours = now.getHours()
