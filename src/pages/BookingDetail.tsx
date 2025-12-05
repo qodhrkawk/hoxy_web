@@ -131,16 +131,17 @@ export default function BookingDetail() {
           if (linkResponse.chat) {
             setChatStatus(linkResponse.chat.status || '')
             setChatPhone(linkResponse.chat.phone || '')
-
-            setChatProductName(linkResponse.chat.product_name || '')
           }
 
-          // fixedDate와 reservationTime은 최상위 레벨에 있음
+          // fixedDate, reservationTime, product_name은 최상위 레벨에 있음
           if (linkResponse.fixedDate) {
             setFixedDate(linkResponse.fixedDate)
           }
           if (linkResponse.reservationTime) {
             setReservationTime(linkResponse.reservationTime)
+          }
+          if (linkResponse.product_name) {
+            setChatProductName(linkResponse.product_name)
           }
 
           // 고객 이름 저장
