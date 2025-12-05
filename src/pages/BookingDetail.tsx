@@ -53,7 +53,6 @@ export default function BookingDetail() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [isInitialMessagesLoaded, setIsInitialMessagesLoaded] = useState(false)
-  const [chatStatus, setChatStatus] = useState<string>('')
   const [chatProductName, setChatProductName] = useState<string>('')
   const [chatPhone, setChatPhone] = useState<string>('')
   const [chatCustomerName, setChatCustomerName] = useState<string>('')
@@ -129,7 +128,6 @@ export default function BookingDetail() {
 
           // 채팅 정보 저장
           if (linkResponse.chat) {
-            setChatStatus(linkResponse.chat.status || '')
             setChatPhone(linkResponse.chat.phone || '')
           }
 
