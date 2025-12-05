@@ -48,11 +48,23 @@ export default function ReservationLanding() {
         if (!mounted) return
 
         // 링크 응답 내 products 배열에서 상품명 추출(표시 순서 정렬)
+        const now = new Date()
         const names =
           Array.isArray(res.products)
-            ? [...res.products].sort(
-                (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
-              )
+            ? [...res.products]
+                .filter((p) => {
+                  // sale_end_date이 있고 현재보다 이전이면 제외
+                  if (p.sale_end_date) {
+                    const endDate = new Date(p.sale_end_date)
+                    if (endDate < now) {
+                      return false
+                    }
+                  }
+                  return true
+                })
+                .sort(
+                  (a, b) => (a.display_order ?? Infinity) - (b.display_order ?? Infinity)
+                )
             : []
         if (mounted) {
           setProducts(names.map((p) => ({ id: p.id, name: p.name })))
