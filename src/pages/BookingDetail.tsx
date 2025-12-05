@@ -1144,6 +1144,10 @@ export default function BookingDetail() {
                 </span>
               </div>
               <div className="reservation-detail-row">
+                <span className="detail-label">촬영 시간</span>
+                <span className="detail-value">{reservationTime || '-'}</span>
+              </div>
+              <div className="reservation-detail-row">
                 <span className="detail-label">이름</span>
                 <span className="detail-value">{chatCustomerName || '-'}</span>
               </div>
