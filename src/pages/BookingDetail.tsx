@@ -1157,13 +1157,13 @@ export default function BookingDetail() {
                   <span className="detail-label">촬영 시간</span>
                   <span className="detail-value">
                     {(() => {
-                      const date = new Date(reservationTime)
-                      const hours = date.getHours()
-                      const minutes = date.getMinutes()
+                      // "HH:MM:SS" 형식의 문자열 파싱
+                      const [hoursStr, minutesStr] = reservationTime.split(':')
+                      const hours = parseInt(hoursStr, 10)
+                      const minutes = parseInt(minutesStr, 10)
                       const period = hours >= 12 ? '오후' : '오전'
                       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
-                      const displayMinutes = minutes.toString().padStart(2, '0')
-                      return `${period} ${displayHours}:${displayMinutes}`
+                      return `${period} ${displayHours}시 ${minutes}분`
                     })()}
                   </span>
                 </div>
