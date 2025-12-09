@@ -1174,7 +1174,7 @@ export default function BookingDetail() {
 
                       const period = hours >= 12 ? '오후' : '오전'
                       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
-                      return `${period} ${displayHours}시 ${minutes}분`
+                      return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`
                     })()}
                   </span>
                 </div>
