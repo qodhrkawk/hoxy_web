@@ -1166,10 +1166,10 @@ export default function BookingDetail() {
                         hours = parseInt(parts[0], 10)
                         minutes = parseInt(parts[1], 10)
                       } else {
-                        // ISO 8601 형식 (예: "2025-01-01T17:15:48Z")
+                        // ISO 8601 형식 (예: "2025-01-01T17:15:48Z") - UTC 시간 그대로 추출
                         const date = new Date(reservationTime)
-                        hours = date.getHours()
-                        minutes = date.getMinutes()
+                        hours = date.getUTCHours()
+                        minutes = date.getUTCMinutes()
                       }
 
                       const period = hours >= 12 ? '오후' : '오전'
