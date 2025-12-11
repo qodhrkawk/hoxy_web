@@ -9,9 +9,10 @@ interface CalendarProps {
   }
   onDateSelect: (priority: 1 | 2 | 3, date: Date | null) => void
   onDateRemove: (priority: 1 | 2 | 3) => void
+  maxDate?: string // ISO 날짜 문자열 (예: "2025-12-31T00:00:00Z")
 }
 
-export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: CalendarProps) {
+export default function Calendar({ selectedDates, onDateSelect, onDateRemove, maxDate }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const getDaysInMonth = (date: Date) => {
@@ -78,9 +79,19 @@ export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: 
     return compareDate < today
   }
 
+  const isAfterMaxDate = (date: Date) => {
+    if (!maxDate) return false
+    const max = new Date(maxDate)
+    max.setHours(23, 59, 59, 999)
+    const compareDate = new Date(date)
+    compareDate.setHours(0, 0, 0, 0)
+    return compareDate > max
+  }
+
   const handleDateClick = (date: Date) => {
     if (!isCurrentMonth(date)) return
     if (isPastDate(date)) return
+    if (isAfterMaxDate(date)) return
 
     const dateStr = date.toDateString()
 
@@ -147,6 +158,8 @@ export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: 
             const isCurrentMonthDate = isCurrentMonth(date)
             const isSelectedDate = isSelected(date)
             const isPast = isPastDate(date)
+            const isAfterMax = isAfterMaxDate(date)
+            const isDisabled = isPast || isAfterMax
 
             return (
               <button
@@ -154,9 +167,9 @@ export default function Calendar({ selectedDates, onDateSelect, onDateRemove }: 
                 type="button"
                 className={`day ${!isCurrentMonthDate ? 'other-month' : ''} ${
                   isSelectedDate ? 'selected' : ''
-                } ${isPast ? 'disabled' : ''}`}
+                } ${isDisabled ? 'disabled' : ''}`}
                 onClick={() => handleDateClick(date)}
-                disabled={isPast}
+                disabled={isDisabled}
               >
                 {date.getDate()}
               </button>

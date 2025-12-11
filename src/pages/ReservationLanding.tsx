@@ -28,9 +28,15 @@ interface ReservationLinkResponse {
   unavailable_dates: string[]
 }
 
+export interface ProductWithEndDate {
+  id: string
+  name: string
+  sale_end_date: string | null
+}
+
 export default function ReservationLanding() {
   const { token } = useParams<{ token: string }>()
-  const [products, setProducts] = useState<{ id: string; name: string }[] | null>(null)
+  const [products, setProducts] = useState<ProductWithEndDate[] | null>(null)
   const [authorId, setAuthorId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -67,7 +73,7 @@ export default function ReservationLanding() {
                 )
             : []
         if (mounted) {
-          setProducts(names.map((p) => ({ id: p.id, name: p.name })))
+          setProducts(names.map((p) => ({ id: p.id, name: p.name, sale_end_date: p.sale_end_date })))
           setAuthorId(res.author?.id ?? null)
           // 작가 정보를 localStorage에 저장 (채팅 화면에서 사용)
           if (res.author) {

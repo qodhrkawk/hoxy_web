@@ -5,7 +5,7 @@ import './BookingForm.css'
 import { networkManager } from '../utils/NetworkManager'
 
 interface BookingFormProps {
-  products?: { id: string; name: string }[]
+  products?: { id: string; name: string; sale_end_date?: string | null }[]
   defaultProduct?: string
   authorId?: string
 }
@@ -206,7 +206,33 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
             </label>
             <select
               value={formData.product}
-              onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+              onChange={(e) => {
+                const newProduct = e.target.value
+                const selectedProduct = products?.find((p) => p.name === newProduct)
+                const saleEndDate = selectedProduct?.sale_end_date
+                  ? new Date(selectedProduct.sale_end_date)
+                  : null
+
+                // 선택된 날짜 중 sale_end_date 이후인 날짜는 제거
+                let newDate1 = formData.date1
+                let newDate2 = formData.date2
+                let newDate3 = formData.date3
+
+                if (saleEndDate) {
+                  saleEndDate.setHours(23, 59, 59, 999)
+                  if (newDate1 && newDate1 > saleEndDate) newDate1 = null
+                  if (newDate2 && newDate2 > saleEndDate) newDate2 = null
+                  if (newDate3 && newDate3 > saleEndDate) newDate3 = null
+                }
+
+                setFormData({
+                  ...formData,
+                  product: newProduct,
+                  date1: newDate1,
+                  date2: newDate2,
+                  date3: newDate3,
+                })
+              }}
               required
               disabled={!products || products.length === 0}
             >
@@ -237,6 +263,11 @@ export default function BookingForm({ products, defaultProduct, authorId }: Book
               }}
               onDateSelect={handleDateSelect}
               onDateRemove={handleDateRemove}
+              maxDate={
+                formData.product
+                  ? products?.find((p) => p.name === formData.product)?.sale_end_date ?? undefined
+                  : undefined
+              }
             />
           </div>
 
