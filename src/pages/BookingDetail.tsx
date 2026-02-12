@@ -61,6 +61,7 @@ export default function BookingDetail() {
   const [isReservationDetailsOpen, setIsReservationDetailsOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isInitialLoad = useRef(true)
   const chatTopRef = useRef<HTMLDivElement>(null)
   const allMessages = useRef<ChatMessage[]>([]) // 서버에서 받은 전체 메시지 저장
@@ -965,6 +966,10 @@ export default function BookingDetail() {
 
     const messageText = message.trim()
     setMessage('') // 입력 필드 먼저 비우기
+    // textarea 높이 초기화
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
 
     // 로컬에 먼저 표시 (낙관적 업데이트)
     const tempId = String(Date.now())
@@ -1526,13 +1531,36 @@ export default function BookingDetail() {
           <img src="/images/plus.png" alt="추가" />
         </button>
         <div className="input-wrapper">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             className="message-input"
             placeholder="메시지를 입력해 주세요"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && message.trim() && !isSendingMessage && handleSendMessage()}
+            onChange={(e) => {
+              setMessage(e.target.value)
+              // 자동 높이 조절
+              const textarea = e.target
+              textarea.style.height = 'auto'
+              textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+            }}
+            onKeyDown={(e) => {
+              // 모바일 기기 감지 (터치 디바이스)
+              const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+              if (e.key === 'Enter') {
+                if (isMobile) {
+                  // 모바일: Enter는 줄바꿈 (기본 동작 유지)
+                  return
+                } else {
+                  // 데스크탑: Shift+Enter는 줄바꿈, Enter만 누르면 전송
+                  if (!e.shiftKey && message.trim() && !isSendingMessage) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }
+              }
+            }}
+            rows={1}
           />
           <button
             className={`send-button ${message.trim() ? 'active' : ''}`}
